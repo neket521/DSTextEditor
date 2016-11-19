@@ -3,11 +3,24 @@ from Tkinter import *
 from ScrolledText import *
 import tkFileDialog
 import tkMessageBox
-
+import time, threading
 root = Tkinter.Tk(className=" Awesome distributed text editor")
 textPad = ScrolledText(root, width=80, height=20)
 
-# create a menu & define functions for each menu item
+
+
+def update():
+    ##update publish function should be here
+    print("update")
+
+
+def newline_check(*args):
+    length = len(textPad.get('1.0', END + '-1c').decode("utf-8"))
+    if length % 80 == 0 and length != 0:
+        update()
+
+textPad.bind("<Key>", newline_check)
+
 def new_command():
     textPad.delete('1.0', END)
 
@@ -45,6 +58,8 @@ def open_shared_command():
 #def dummy():
 #    print "I am a Dummy Command, I will be removed in the next step"
 
+
+
 menu = Menu(root)
 root.config(menu=menu)
 filemenu = Menu(menu)
@@ -66,4 +81,5 @@ menu.add_cascade(label="Help", menu=helpmenu)
 helpmenu.add_command(label="About...", command=about_command)
 #
 textPad.pack()
+
 root.mainloop()
