@@ -9,5 +9,8 @@ if __name__ == '__main__':
     c = Client()
     c.connect(('127.0.0.1',7777))
 
+    #test
+    c.sendshort("Hi")
+
     c.loop()
     c.stop()

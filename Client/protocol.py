@@ -36,6 +36,14 @@ class Client():
                       ' %s ' % (srv_addr+(str(e),)))
         return False
 
+    def sendshort(self, message):
+        if self.__s.sendall(message) == None:
+            logging.info('Sent %d bytes to %s:%d' % ( (len(message),)+self.__s.getpeername()))
+
+    def sendlong(self, message):
+        message=message+'\n'
+        if self.__s.sendall(message) == None:
+            logging.info('Sent %d bytes to %s:%d' % ( (len(message),)+self.__s.getpeername()))
 
 
 
