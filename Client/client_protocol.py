@@ -1,15 +1,12 @@
-'''
-Created on Oct 18, 2016
-
-@author: devel
-'''
 import logging
-FORMAT='%(asctime)s (%(threadName)-2s) %(message)s'
-logging.basicConfig(level=logging.INFO,format=FORMAT)
 from threading import Thread, Lock
 from socket import AF_INET, SOCK_STREAM, socket, SHUT_RD
 from socket import error as soc_err
 import time
+
+FORMAT='%(asctime)s (%(threadName)-2s) %(message)s'
+logging.basicConfig(level=logging.INFO,format=FORMAT)
+
 class Client():
 
     def __init__(self):
@@ -35,6 +32,9 @@ class Client():
             logging.error('Can not connect server at %s:%d'\
                       ' %s ' % (srv_addr+(str(e),)))
         return False
+
+    def handshake(self, username, password):
+        logging.info("perform handshake")
 
     def sendshort(self, message):
         if self.__s.sendall(message) == None:

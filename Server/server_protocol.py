@@ -1,9 +1,10 @@
 import logging
+from threading import Thread, Lock
+from socket import AF_INET, SOCK_STREAM, socket
+
 FORMAT='%(asctime)s (%(threadName)-2s) %(message)s'
 logging.basicConfig(level=logging.DEBUG,format=FORMAT)
 LOG = logging.getLogger()
-from threading import Thread, Lock
-from socket import AF_INET, SOCK_STREAM, socket
 
 
 
