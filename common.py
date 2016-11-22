@@ -3,28 +3,37 @@ DEFAULT_SERVER_PORT = 7777
 DEFAULT_SERVER_INET_ADDR = '127.0.0.1'
 
 # Requests --------------------------------------------------------------------
-__REQ_PUBLISH = '1'
-__REQ_LAST = '2'
-__REQ_GET = '3'
-__REQ_GET_N_LAST = '4'
-__CTR_MSGS = { __REQ_GET:'Get message by id',
-               __REQ_LAST:'Get iDs of last N messages',
-               __REQ_PUBLISH:'Publish new message',
-               __REQ_GET_N_LAST:'Get last N messages'
-              }
+REQ_SEND = '1'
+REQ_GET = '2'
+REQ_AUTH = '3'
+CTR_MSGS = {REQ_GET: 'Get message by id',
+            REQ_SEND: 'Send new message',
+            REQ_AUTH: 'Authorize user'
+            }
 # Responses--------------------------------------------------------------------
-__RSP_OK = '0'
-__RSP_BADFORMAT = '1'
-__RSP_MSGNOTFOUND = '2'
-__RSP_UNKNCONTROL = '3'
-__RSP_ERRTRANSM = '4'
-__RSP_CANT_CONNECT = '5'
-__ERR_MSGS = { __RSP_OK:'No Error',
-               __RSP_BADFORMAT:'Malformed message',
-               __RSP_MSGNOTFOUND:'Message not found by iD',
-               __RSP_UNKNCONTROL:'Unknown control code',
-               __RSP_ERRTRANSM:'Transmission Error',
-               __RSP_CANT_CONNECT:'Can\'t connect to server'
-               }
+RSP_OK_SEND = '0'
+RSP_OK_GET = '1'
+RSP_OK_AUTH = '2'
+RSP_BADFORMAT = '3'
+RSP_MSGNOTFOUND = '4'
+RSP_UNKNCONTROL = '5'
+RSP_ERRTRANSM = '6'
+RSP_CANT_CONNECT = '7'
+RSP_NOTIFY = '8'
+RSP_ERR_AUTH = '9'
+ERR_MSGS = {RSP_OK_SEND: 'Message sent, no error',
+            RSP_OK_GET: 'Get successful',
+            RSP_OK_AUTH: 'Authorization succecssful',
+            RSP_BADFORMAT: 'Malformed message',
+            RSP_MSGNOTFOUND: 'Message not found by iD',
+            RSP_UNKNCONTROL: 'Unknown control code',
+            RSP_ERRTRANSM: 'Transmission Error',
+            RSP_CANT_CONNECT: 'Can\'t connect to server',
+            RSP_NOTIFY: 'Error on notifying',
+            RSP_ERR_AUTH: 'Authentication failed'
+            }
 # Field separator for sending multiple values ---------------------------------
-__MSG_FIELD_SEP = ':'
+MSG_FIELD_SEP = ':'
+MSG_SEP = ';'
+# Buffer size
+DEFAULT_BUFSIZE = 1024
