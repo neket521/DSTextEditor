@@ -1,3 +1,4 @@
+from Client.client_protocol import Client
 import Tkinter
 from Tkinter import *
 from ScrolledText import *
@@ -5,21 +6,55 @@ import tkFileDialog
 import tkMessageBox
 import time, threading
 root = Tkinter.Tk(className=" Awesome distributed text editor")
-textPad = ScrolledText(root, width=80, height=20)
+textPadWidth = 80
+textPad = ScrolledText(root, width = textPadWidth, height=20)
+length = 0
+linecount = 0
+old_length = -1
+counter = True
+
+#Timer
+def timer():
+    global old_length, length, counter
+    if(old_length == length and length !=0 and counter):
+        update()
+        counter = False
+        #print(old_length)
+        #print(length)
+    old_length = length
+    threading.Timer(5, timer).start()
+timer()
 
 
 
-def update():
-    ##update publish function should be here
-    print("update")
 
+def getLength():
+    return len(textPad.get('1.0', END + '-1c'))
+
+def getLines():
+    text = textPad.get('1.0', END + '-1c').split('\n')
+    return [[j[i:i + 80] for i in range(0, len(j), textPadWidth)] for j in text]
+
+def update(*args):
+    tosend = getLines()[-1]
+   ## call sending method from client
+    print tosend
 
 def newline_check(*args):
-    length = len(textPad.get('1.0', END + '-1c').decode("utf-8"))
-    if length % 80 == 0 and length != 0:
+    global counter, length, linecount
+    counter = True
+    length = getLength()
+    if (length+1) % textPadWidth == 0 and length != 0:
+        linecount += 1
         update()
 
-textPad.bind("<Key>", newline_check)
+    elif int(length / textPadWidth) != linecount:
+        linecount = int(length / textPadWidth)
+        update()
+
+textPad.bind("<KeyRelease>", newline_check)
+textPad.bind("<Return>", update)
+
 
 def new_command():
     textPad.delete('1.0', END)
