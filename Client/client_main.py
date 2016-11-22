@@ -1,7 +1,7 @@
 from Client.client_protocol import Client
 from threading import Thread
 from time import asctime, localtime
-import logging, time
+import logging
 
 FORMAT = '%(asctime)s %(message)s'
 logging.basicConfig(level=logging.INFO, format=FORMAT)
@@ -59,9 +59,9 @@ def client_main(args):
     c.set_on_authorized_callback(on_authorized)
 
     if c.connect((args.host, int(args.port))):
-        # start UI, ask for username and password
-        # send handshake
-        c.handshake('elmar', '000')
-        time.sleep(5)
+        c.handshake('anton', '1234')
+
+        c.loop()
         # t.join()
-        logging.info('Couldn\'t authenticate, terminating')
+
+    logging.info('Terminating')
