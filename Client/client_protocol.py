@@ -1,3 +1,4 @@
+import sys
 import logging, hashlib
 from threading import Lock
 from socket import AF_INET, SOCK_STREAM, socket, SHUT_RD
@@ -147,3 +148,10 @@ class Client():
     def send_long_message(self, message):
         # split message into chunks of size DEFAULT_BUFSIZE and send all the chunks to server
         logging.info("sending long message")
+        l = [[j[i:i + 80] for i in range(0, len(j), len(message))] for j in message]
+        for chunk in l:
+            req = REQ_SEND + MSG_FIELD_SEP + "".join(chunk)
+            self.__session_send(req)
+        logging.info("long message sending complete")
+
+

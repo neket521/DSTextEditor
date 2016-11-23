@@ -34,6 +34,8 @@ def client_main(args):
 
     def on_authorized():
         UI(c)
+        c.loop()
+
 
     c = Client()
     c.set_on_published_callback(on_publish)

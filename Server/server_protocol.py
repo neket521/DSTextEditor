@@ -146,6 +146,8 @@ class Server():
         self.__msgs = []
         self.__on_save = None
 
+        self.__lock = Lock()
+
     def listen(self, sock_addr, backlog=1):
         self.__sock_addr = sock_addr
         self.__backlog = backlog
