@@ -120,7 +120,7 @@ class Client():
 
     def loop(self):
         logging.info('Falling to receiver loop ...')
-        # self.__fetch_msgs()
+        #self.__fetch_msgs()
         while 1:
             m = self.__session_rcv()
             if len(m) <= 0:

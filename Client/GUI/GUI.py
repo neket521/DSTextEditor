@@ -9,8 +9,10 @@ import Tkinter
 class UI:
 
     def __init__(self, client):
-        self.root = Tkinter.Tk(className=" Awesome distributed text editor")
+        client.handshake(self.getpwd().split(","))
         self.client = client
+    def init(self):
+        self.root = Tkinter.Tk(className=" Awesome distributed text editor")
         self.textPadWidth = 80
         self.textPad = ScrolledText(self.root, width=self.textPadWidth, height=20)
         self.length = 0
@@ -23,6 +25,7 @@ class UI:
         self.textPad.bind("<Return>", self.update)
         self.textPad.pack()
         self.root.mainloop()
+
 
     def init_menu(self):
         menu = Menu(self.root)
@@ -66,7 +69,7 @@ class UI:
 
     def getLines(self):
         text = self.textPad.get('1.0', END + '-1c').encode("utf-8").split('\n')
-        return [[j[i:i + 80] for i in range(0, len(j), self.textPadWidth)] for j in text]
+        return [[j[i:i + self.textPadWidth] for i in range(0, len(j), self.textPadWidth)] for j in text]
 
     def update(self, *args):
         tosend = "".join(self.getLines()[-1][-1])
@@ -93,8 +96,34 @@ class UI:
         if file != None:
             contents = file.read()
             self.textPad.insert('1.0', contents)
-            self.client.send_long_message(contents)
             file.close()
+
+    def getpwd(self):
+        password = ''
+        root = Tk()
+        userbox = Entry(root)
+        pwdbox = Entry(root, show='*')
+
+        def onpwdentry(evt):
+            password = pwdbox.get()
+            root.destroy()
+
+        def onokclick():
+            username = userbox.get()
+            password = pwdbox.get()
+            print(username + "," + password)
+            root.destroy()
+
+        Label(root, text='Username and password').pack(side='top')
+        #Label(root, text='Password').pack(side='middle')
+        userbox.pack(side='top')
+        pwdbox.pack(side='top')
+        pwdbox.bind('<Return>', onpwdentry)
+        Button(root, command=onokclick, text='OK').pack(side='bottom')
+
+        root.mainloop()
+        self.init()
+        return password
 
     def save_command(self):
         file = tkFileDialog.asksaveasfile(mode='w')
@@ -111,10 +140,12 @@ class UI:
             self.client.stop()
 
     def about_command(self):
-        label = tkMessageBox.showinfo("About", "Just Another TextPad \n Copyright \n No rights left to reserve")
+        label = tkMessageBox.showinfo('Copyright (c) Anton Prokopov,\n Nikita Kirienko,\n Elmar Abbasov')
 
     def share_command(self):
-        print "I'm not sharing, I'm just hanging out here.."
+        data = self.textPad.get('1.0', END + '-1c')
+        self.client.send_long_message(data)
+        print("sdfgh")
 
     def open_shared_command(self):
         print "Opening file on the server side.."
