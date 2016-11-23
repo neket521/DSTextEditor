@@ -17,24 +17,6 @@ ___VENDOR = 'Copyright (c) Anton Prokopov, Nikita Kirienko, Elmar Abbasov'
 def __info():
     return '%s version %s (%s) %s' % (___NAME, ___VER, ___BUILT, ___VENDOR)
 
-
-def handle_user_input(myclient):
-    logging.info('Starting input processor')
-
-    while 1:
-        logging.info('\nHit Enter to init user-input ...')
-        raw_input('')
-        logging.info('\nEnter message to send to all or Q to exit: ')
-        m = raw_input('')
-        if len(m) <= 0:
-            continue
-        elif m == 'Q':
-            myclient.stop()
-            return
-        else:
-            myclient.send_short_message(m)
-
-
 def client_main(args):
     c = Client()
     def on_recv(msg):
