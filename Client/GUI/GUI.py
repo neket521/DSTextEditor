@@ -10,8 +10,7 @@ class UI:
 
     def __init__(self, client):
         self.client = client
-        self.username = ''
-        self.password = ''
+
 
     def init(self):
         self.root = Tkinter.Tk(className=" Awesome distributed text editor")
@@ -27,7 +26,6 @@ class UI:
         self.textPad.bind("<Return>", self.update)
         self.textPad.pack()
         self.root.mainloop()
-
 
     def init_menu(self):
         menu = Menu(self.root)
@@ -46,25 +44,26 @@ class UI:
         openmenu.add_command(label="Open local file", command=self.open_command)
         openmenu.add_command(label="Open shared file", command=self.open_shared_command)
 
+        getmenu = Menu(menu)
+        menu.add_cascade(label="Get", menu=getmenu)
+        getmenu.add_command(label = "Files on the server", command=self.getFileList)
+
         helpmenu = Menu(menu)
         menu.add_cascade(label="Help", menu=helpmenu)
         helpmenu.add_command(label="About...", command=self.about_command)
-    
+
 
     #Timer
     def timer(self):
         #print(self.old_length)
         #print(self.getLength())
+
         l = self.getLength()
         if(self.old_length == l and l !=0 and self.counter and self.getLines()[-1] != []):
             self.update()
             self.counter = False
         self.old_length = l
         threading.Timer(5, self.timer).start()
-
-    @classmethod
-    def setOldLength(self, value):
-        self.old_length += value
 
     def getLength(self):
         return len(self.textPad.get('1.0', END + '-1c'))
@@ -74,9 +73,9 @@ class UI:
         return [[j[i:i + self.textPadWidth] for i in range(0, len(j), self.textPadWidth)] for j in text]
 
     def update(self, *args):
-        tosend = "".join(self.getLines()[-1][-1])
+        tosend = "".join(self.getLines()[-1])
        ## call sending method from client
-        print(tosend)
+        #print(tosend)
         self.client.send_short_message(tosend)
 
     def newline_check(self, *args):
@@ -89,6 +88,9 @@ class UI:
         elif int(length / self.textPadWidth) != self.linecount:
             self.linecount = int(length / self.textPadWidth)
             self.update()
+
+    def getFileList(self):
+        self.client.get_filelist()
 
     def new_command(self):
         self.textPad.delete('1.0', END)

@@ -3,7 +3,7 @@ from socket import AF_INET, SOCK_STREAM, socket
 from socket import error as soc_err
 from time import time
 from common import DEFAULT_BUFSIZE, RSP_UNKNCONTROL, REQ_SEND, RSP_OK_AUTH, RSP_ERR_AUTH, \
-    MSG_SEP, MSG_FIELD_SEP, RSP_OK_SEND, RSP_OK_GET, RSP_NOTIFY, RSP_BADFORMAT, REQ_GET, REQ_AUTH
+    MSG_SEP, MSG_FIELD_SEP, RSP_OK_SEND, RSP_OK_GET, RSP_NOTIFY, RSP_BADFORMAT, REQ_GET, REQ_AUTH, REQ_GETF, RSP_OK_GETF
 import logging, uuid, os
 
 FORMAT = '%(asctime)s (%(threadName)-2s) %(message)s'
@@ -79,6 +79,9 @@ class ClientSession(Thread):
                 # msgs = map(serialize,msgs)
                 msgs = MSG_FIELD_SEP.join(tuple(msgs))
                 return RSP_OK_GET + MSG_FIELD_SEP + msgs
+            elif message.startswith(REQ_GETF + MSG_FIELD_SEP):
+                msg = "Tipa tut fajllist"
+                return RSP_OK_GETF + MSG_FIELD_SEP + msg
             else:
                 LOG.debug('Unknown control message received: %s ' % message)
                 return RSP_UNKNCONTROL
@@ -92,6 +95,7 @@ class ClientSession(Thread):
             else:
                 LOG.info('Auth failed')
                 return RSP_ERR_AUTH
+
         else:
             # authentication failed
             LOG.info('Auth failed')
