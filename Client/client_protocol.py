@@ -112,7 +112,6 @@ class Client():
         elif message.startswith(RSP_OK_GET + MSG_FIELD_SEP):
             logging.debug('Messages retrieved ...')
             msgs = message[2:].split(MSG_FIELD_SEP)
-            # msgs = map(deserialize, msgs)
             for m in msgs:
                 self.__on_recv(m)
         else:
@@ -134,15 +133,14 @@ class Client():
         req = REQ_AUTH + MSG_FIELD_SEP + username + MSG_FIELD_SEP + hash_obj.hexdigest()
         return self.__session_send(req)
 
-    # should be modified to fetch the whole file, if collaborator doesn't have it or the lates changes from the queue
-    def __fetch_msgs(self):
+    # should be modified to fetch the whole file and the changes from the queue
+    def __fetch_document(self):
         req = REQ_GET + MSG_FIELD_SEP
         return self.__session_send(req)
 
     # send updated line
     def send_short_message(self, message):
         logging.info("sending short message")
-        # serialize message
         req = REQ_SEND + MSG_FIELD_SEP + message
         return self.__session_send(req)
 
