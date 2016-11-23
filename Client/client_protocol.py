@@ -108,7 +108,7 @@ class Client():
             self.__on_authorized()
         elif message.startswith(RSP_NOTIFY + MSG_FIELD_SEP):
             logging.debug('Server notification received, fetching messages')
-            self.__fetch_msgs()
+            #self.__fetch_msgs()
         elif message.startswith(RSP_OK_GET + MSG_FIELD_SEP):
             logging.debug('Messages retrieved ...')
             msgs = message[2:].split(MSG_FIELD_SEP)
@@ -121,7 +121,7 @@ class Client():
 
     def loop(self):
         logging.info('Falling to receiver loop ...')
-        # self.__fetch_msgs()
+        #self.__fetch_msgs()
         while 1:
             m = self.__session_rcv()
             if len(m) <= 0:
