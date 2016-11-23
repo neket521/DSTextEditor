@@ -23,5 +23,5 @@ if __name__ == '__main__':
                         'defaults to %d' % DEFAULT_SERVER_PORT, \
                         default=DEFAULT_SERVER_PORT)
     args = parser.parse_args()
-    # Run Mboard Client
+    # Run Client
     client_main(args)

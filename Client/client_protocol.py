@@ -147,5 +147,5 @@ class Client():
 
     # send the whole file
     def send_long_message(self, message):
-        # split message into chunks of size common.__DEFAULT_BUFSIZE and send all the chunks to server
+        # split message into chunks of size DEFAULT_BUFSIZE and send all the chunks to server
         logging.info("sending long message")
