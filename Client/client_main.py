@@ -1,5 +1,5 @@
 from Client.client_protocol import Client
-from threading import Thread
+from GUI.GUI import UI
 from time import asctime, localtime
 import logging
 
@@ -36,6 +36,7 @@ def handle_user_input(myclient):
 
 
 def client_main(args):
+    c = Client()
     def on_recv(msg):
         if len(msg) > 0:
             msg = msg.split(' ')
@@ -50,8 +51,7 @@ def client_main(args):
         logging.info('\n Message published')
 
     def on_authorized():
-        t = Thread(name='InputProcessor', target=handle_user_input, args=(c,))
-        t.start()
+        UI(c)
 
     c = Client()
     c.set_on_published_callback(on_publish)
@@ -60,8 +60,6 @@ def client_main(args):
 
     if c.connect((args.host, int(args.port))):
         c.handshake('anton', '1234')
-
         c.loop()
-        # t.join()
 
     logging.info('Terminating')

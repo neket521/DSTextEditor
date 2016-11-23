@@ -27,7 +27,7 @@ class ClientSession(Thread):
 
     def __get(self):
         msgs = self.__serv.get_messages(self.__m_last)
-        self.__m_last = 1  # if new message received, then immediately update clients with this 1 message, no need to display n last messages
+        self.__m_last = 1
         return msgs
 
     def __session_rcv(self):
@@ -49,8 +49,7 @@ class ClientSession(Thread):
             m = ''
         except soc_err as e:
             if e.errno == 107:
-                LOG.warn('Client %s:%d left before server could handle it' \
-                         '' % self.__addr)
+                LOG.warn('Client %s:%d left before server could handle it' % self.__addr)
             else:
                 LOG.error('Error: %s' % str(e))
             self.__s.close()
@@ -134,16 +133,17 @@ class ClientSession(Thread):
         rel_path = 'Database/users.txt'
         path = os.path.join(dir, rel_path)
         f = open(path, 'r')
+        result = None
         for line in f:
             if line.startswith(username):
-                return line.split(':')[1].strip('\n')
-        return None
+                result = line.split(':')[1].strip('\n')
+        f.close()
+        return result
 
 
 class Server():
     def __init__(self):
         self.__msgs = []
-        self.__lock = Lock()
         self.__on_save = None
 
     def listen(self, sock_addr, backlog=1):
