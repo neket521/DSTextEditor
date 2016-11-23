@@ -64,10 +64,9 @@ class ClientSession(Thread):
             return RSP_BADFORMAT
         LOG.debug('Request control code (%s)' % message[0])
         chunks = message.split(MSG_FIELD_SEP)
-        if len(message.split(MSG_FIELD_SEP)) >= 3 and chunks[2].strip(';') == self.__token:
+        if len(chunks) >= 3 and chunks[2].strip(';') == self.__token:
             if message.startswith(REQ_SEND + MSG_FIELD_SEP):
                 msg = message.split(MSG_FIELD_SEP)[1]
-                # msg = deserialize(msg)
                 LOG.debug('Client %s:%d will publish: ' \
                           '%s' % (self.__addr + ((msg[:60] + '...' if len(msg) > 60 else msg),)))
                 self.__save_message(msg)
@@ -76,7 +75,6 @@ class ClientSession(Thread):
             elif message.startswith(REQ_GET + MSG_FIELD_SEP):
                 msgs = self.__get()
                 msgs = map(lambda x: ' '.join(map(str, x)), msgs)
-                # msgs = map(serialize,msgs)
                 msgs = MSG_FIELD_SEP.join(tuple(msgs))
                 return RSP_OK_GET + MSG_FIELD_SEP + msgs
             elif message.startswith(REQ_GETF + MSG_FIELD_SEP):
@@ -148,10 +146,10 @@ class ClientSession(Thread):
 
 
 class Server():
+
     def __init__(self):
         self.__msgs = []
         self.__on_save = None
-
         self.__lock = Lock()
 
     def listen(self, sock_addr, backlog=1):

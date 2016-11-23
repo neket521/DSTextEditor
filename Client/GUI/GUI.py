@@ -55,9 +55,6 @@ class UI:
 
     #Timer
     def timer(self):
-        #print(self.old_length)
-        #print(self.getLength())
-
         l = self.getLength()
         if(self.old_length == l and l !=0 and self.counter and self.getLines()[-1] != []):
             self.update()
@@ -125,7 +122,6 @@ class UI:
         Button(root, command=onokclick, text='OK').pack(side='bottom')
 
         root.mainloop()
-        #self.init()
         return self.username+','+self.password
 
     def save_command(self):
@@ -138,7 +134,6 @@ class UI:
 
     def exit_command(self):
         if tkMessageBox.askokcancel("Quit", "Do you really want to quit?"):
-            # stop timer also
             self.root.destroy()
             self.client.stop()
 

@@ -115,7 +115,7 @@ class Client():
                 self.__on_recv(m)
         elif message.startswith(RSP_OK_GETF + MSG_FIELD_SEP):
             logging.debug('Filelist received ...')
-            m = message[2:]
+            m = message[3:] #RSP_OK_GETF has already 2 symbols + 1 for separator ':' = offset of 3
             self.__on_recv(m)
         else:
             logging.debug('Unknown control message received: %s ' % message)
@@ -144,12 +144,12 @@ class Client():
     # send updated line
     def send_short_message(self, message):
         logging.info("sending short message")
-        req = REQ_SEND + MSG_FIELD_SEP
+        req = REQ_SEND + MSG_FIELD_SEP + message
         return self.__session_send(req)
 
     def get_filelist(self):
-        logging.info("sending short message")
-        req = REQ_GETF + MSG_FIELD_SEP
+        logging.info("sending request for retrieving available files")
+        req = REQ_GETF + MSG_FIELD_SEP + 'getFiles'
         return self.__session_send(req)
 
     # send the whole file

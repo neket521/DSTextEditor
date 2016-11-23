@@ -1,6 +1,6 @@
 from Client.client_protocol import Client
 from GUI.GUI import UI
-from time import asctime, localtime
+from threading import Thread
 import logging
 
 FORMAT = '%(asctime)s %(message)s'
@@ -23,22 +23,14 @@ def client_main(args):
 
     def on_recv(msg):
         if len(msg) > 0:
-            msg = msg.split(' ')
-            msg = tuple(msg[:3] + [' '.join(msg[3:])])
-            #t_form = lambda x: asctime(localtime(float(x)))
-            #m_form = lambda x: '%s [%s:%s] -> ' \
-            #                   '%s' % (t_form(x[0]), x[1], x[2], x[3].decode('utf-8'))
-            #m = m_form(msg)
-            print(msg)
-            #logging.info('\n%s' % msg)
+            logging.info('\n%s' % msg)
 
     def on_publish():
         logging.info('\n Message published')
 
     def on_authorized():
-        ui.init()
-        #c.loop()
-
+        t = Thread(name='InputProcessor', target=ui.init)
+        t.start()
 
     c.set_on_published_callback(on_publish)
     c.set_on_recv_callback(on_recv)
