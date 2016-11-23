@@ -12,8 +12,6 @@ class UI:
         self.client = client
         self.username = ''
         self.password = ''
-        #client.handshake(self, self.getpwd().split(","))
-        #client.loop()
 
     def init(self):
         self.root = Tkinter.Tk(className=" Awesome distributed text editor")
@@ -108,7 +106,8 @@ class UI:
         pwdbox = Entry(root, show='*')
 
         def onpwdentry(evt):
-            password = pwdbox.get()
+            self.username = userbox.get()
+            self.password = pwdbox.get()
             root.destroy()
 
         def onokclick():

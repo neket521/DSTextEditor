@@ -16,6 +16,7 @@ class Client():
         self.__on_published = None
         self.__on_authorized = None
         self.__token = None
+        self.auth = False
 
     def set_on_recv_callback(self, on_recv_f):
         self.__on_recv = on_recv_f
@@ -105,6 +106,7 @@ class Client():
             token = message.split(MSG_FIELD_SEP)[1]
             self.__token = token
             self.__on_authorized()
+            self.auth = True
         elif message.startswith(RSP_NOTIFY + MSG_FIELD_SEP):
             logging.debug('Server notification received, fetching messages')
             # self.__fetch_msgs()
