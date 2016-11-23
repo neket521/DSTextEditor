@@ -52,6 +52,7 @@ def client_main(args):
 
     def on_authorized():
         UI(c)
+        c.loop()
 
 
     c = Client()

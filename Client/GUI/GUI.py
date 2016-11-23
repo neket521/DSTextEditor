@@ -5,6 +5,7 @@ import tkMessageBox
 import threading
 import Tkinter
 
+
 class UI:
 
     def __init__(self, client):
@@ -50,7 +51,7 @@ class UI:
         #print(self.old_length)
         #print(self.getLength())
         l = self.getLength()
-        if(self.old_length == l and l !=0 and self.counter):
+        if(self.old_length == l and l !=0 and self.counter and self.getLines()[-1] != []):
             self.update()
             self.counter = False
         self.old_length = l
@@ -68,9 +69,10 @@ class UI:
         return [[j[i:i + 80] for i in range(0, len(j), self.textPadWidth)] for j in text]
 
     def update(self, *args):
-        tosend = self.getLines()[-1]
+        tosend = "".join(self.getLines()[-1][-1])
        ## call sending method from client
-        print tosend
+        print(tosend)
+        self.client.send_short_message(tosend)
 
     def newline_check(self, *args):
         self.counter = True
@@ -91,6 +93,7 @@ class UI:
         if file != None:
             contents = file.read()
             self.textPad.insert('1.0', contents)
+            self.client.send_long_message(contents)
             file.close()
 
     def save_command(self):
