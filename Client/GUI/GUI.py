@@ -9,8 +9,12 @@ import Tkinter
 class UI:
 
     def __init__(self, client):
-        client.handshake(self.getpwd().split(","))
         self.client = client
+        self.username = ''
+        self.password = ''
+        #client.handshake(self, self.getpwd().split(","))
+        #client.loop()
+
     def init(self):
         self.root = Tkinter.Tk(className=" Awesome distributed text editor")
         self.textPadWidth = 80
@@ -99,7 +103,6 @@ class UI:
             file.close()
 
     def getpwd(self):
-        password = ''
         root = Tk()
         userbox = Entry(root)
         pwdbox = Entry(root, show='*')
@@ -109,9 +112,8 @@ class UI:
             root.destroy()
 
         def onokclick():
-            username = userbox.get()
-            password = pwdbox.get()
-            print(username + "," + password)
+            self.username = userbox.get()
+            self.password = pwdbox.get()
             root.destroy()
 
         Label(root, text='Username and password').pack(side='top')
@@ -122,8 +124,8 @@ class UI:
         Button(root, command=onokclick, text='OK').pack(side='bottom')
 
         root.mainloop()
-        self.init()
-        return password
+        #self.init()
+        return self.username+','+self.password
 
     def save_command(self):
         file = tkFileDialog.asksaveasfile(mode='w')

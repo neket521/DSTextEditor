@@ -1,4 +1,3 @@
-import sys
 import logging, hashlib
 from threading import Lock
 from socket import AF_INET, SOCK_STREAM, socket, SHUT_RD

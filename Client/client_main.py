@@ -19,6 +19,7 @@ def __info():
 
 def client_main(args):
     c = Client()
+    ui = UI(c)
     def on_recv(msg):
         if len(msg) > 0:
             msg = msg.split(' ')
@@ -33,16 +34,16 @@ def client_main(args):
         logging.info('\n Message published')
 
     def on_authorized():
-        UI(c)
+        ui.init()
         c.loop()
 
-    c = Client()
     c.set_on_published_callback(on_publish)
     c.set_on_recv_callback(on_recv)
     c.set_on_authorized_callback(on_authorized)
 
     if c.connect((args.host, int(args.port))):
-        c.handshake('anton', '1234')
+        u, p = ui.getpwd().split(',')
+        c.handshake(u, p)
         c.loop()
 
     logging.info('Terminating')
