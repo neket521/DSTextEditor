@@ -53,6 +53,7 @@ def client_main(args):
     def on_authorized():
         UI(c)
 
+
     c = Client()
     c.set_on_published_callback(on_publish)
     c.set_on_recv_callback(on_recv)

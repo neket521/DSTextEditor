@@ -44,20 +44,27 @@ class UI:
         menu.add_cascade(label="Help", menu=helpmenu)
         helpmenu.add_command(label="About...", command=self.about_command)
 
+
     #Timer
     def timer(self):
-        if(self.old_length == self.length and self.length !=0 and self.counter):
+        #print(self.old_length)
+        #print(self.getLength())
+        l = self.getLength()
+        if(self.old_length == l and l !=0 and self.counter):
             self.update()
             self.counter = False
-            self.old_length = self.length
+        self.old_length = l
         threading.Timer(5, self.timer).start()
 
+    @classmethod
+    def setOldLength(self, value):
+        self.old_length += value
 
     def getLength(self):
         return len(self.textPad.get('1.0', END + '-1c'))
 
     def getLines(self):
-        text = self.textPad.get('1.0', END + '-1c').split('\n')
+        text = self.textPad.get('1.0', END + '-1c').encode("utf-8").split('\n')
         return [[j[i:i + 80] for i in range(0, len(j), self.textPadWidth)] for j in text]
 
     def update(self, *args):
