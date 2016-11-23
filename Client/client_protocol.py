@@ -2,12 +2,13 @@ import logging, hashlib
 from threading import Lock
 from socket import AF_INET, SOCK_STREAM, socket, SHUT_RD
 from socket import error as soc_err
+import Tkinter
+from Tkinter import *
 from common import DEFAULT_BUFSIZE, RSP_UNKNCONTROL, REQ_SEND, RSP_OK_AUTH, RSP_ERR_AUTH, \
-    MSG_SEP, MSG_FIELD_SEP, RSP_OK_SEND, RSP_OK_GET, RSP_NOTIFY, REQ_GET, REQ_AUTH, REQ_GETF, RSP_OK_GETF
+    MSG_SEP, MSG_FIELD_SEP, RSP_OK_SEND, RSP_OK_GET, RSP_NOTIFY, REQ_GET, REQ_AUTH, RSP_OK_GETF, REQ_GETF, REQ_SP, RSP_OK_SP, REQ_SENDF
 
 FORMAT = '%(asctime)s (%(threadName)-2s) %(message)s'
 logging.basicConfig(level=logging.INFO, format=FORMAT)
-
 
 class Client():
     def __init__(self):
@@ -116,7 +117,13 @@ class Client():
         elif message.startswith(RSP_OK_GETF + MSG_FIELD_SEP):
             logging.debug('Filelist received ...')
             m = message[3:] #RSP_OK_GETF has already 2 symbols + 1 for separator ':' = offset of 3
-            self.__on_recv(m)
+            #somehow need to show that message with GUI.show_files(m)
+        elif message.startswith(RSP_OK_SP + MSG_FIELD_SEP):
+            logging.debug('Line available ...')
+            #print("line")
+            #m = message[3:]  # RSP_OK_GETF has already 2 symbols + 1 for separator ':' = offset of 3
+            #self.__on_recv(m)
+            #need to call update method from gui if
         else:
             logging.debug('Unknown control message received: %s ' % message)
             return RSP_UNKNCONTROL
@@ -147,6 +154,11 @@ class Client():
         req = REQ_SEND + MSG_FIELD_SEP + message
         return self.__session_send(req)
 
+    def send_position(self, message):
+        logging.info("sending current line number")
+        req = REQ_SP + MSG_FIELD_SEP + message
+        return self.__session_send(req)
+
     def get_filelist(self):
         logging.info("sending request for retrieving available files")
         req = REQ_GETF + MSG_FIELD_SEP + 'getFiles'
@@ -156,10 +168,15 @@ class Client():
     def send_long_message(self, message):
         # split message into chunks of size DEFAULT_BUFSIZE and send all the chunks to server
         logging.info("sending long message")
-        l = [[j[i:i + DEFAULT_BUFSIZE] for i in range(0, len(j), len(message))] for j in message]
+        l = [message[i:i + DEFAULT_BUFSIZE] for i in range(0, len(message), DEFAULT_BUFSIZE)]
+        req = REQ_SENDF + MSG_FIELD_SEP
+        self.__session_send(req)
         for chunk in l:
             req = REQ_SEND + MSG_FIELD_SEP + "".join(chunk)
             self.__session_send(req)
+            print chunk
+        req = REQ_SENDF + MSG_FIELD_SEP
+        self.__session_send(req)
         logging.info("long message sending complete")
 
 

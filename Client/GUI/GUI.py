@@ -5,7 +5,6 @@ import tkMessageBox
 import threading
 import Tkinter
 
-
 class UI:
 
     def __init__(self, client):
@@ -21,10 +20,12 @@ class UI:
         self.counter = True
         self.init_menu()
         self.timer()
-        self.textPad.bind("<KeyRelease>", self.newline_check)
+        self.textPad.bind("<Key>", self.newline_check)
         self.textPad.bind("<Return>", self.update)
         self.textPad.pack()
         self.root.mainloop()
+
+
 
     def init_menu(self):
         menu = Menu(self.root)
@@ -64,26 +65,32 @@ class UI:
     def getLength(self):
         return len(self.textPad.get('1.0', END + '-1c'))
 
+    def get_cursor_pos(self):
+        return self.textPad.index(INSERT)
+
     def getLines(self):
         text = self.textPad.get('1.0', END + '-1c').encode("utf-8").split('\n')
-        return [[j[i:i + self.textPadWidth] for i in range(0, len(j), self.textPadWidth)] for j in text]
+        return [text[i:i + self.textPadWidth] for i in range(0, len(text), self.textPadWidth)]
 
     def update(self, *args):
-        tosend = "".join(self.getLines()[-1])
-       ## call sending method from client
-        #print(tosend)
-        self.client.send_short_message(tosend)
+        self.send_position()
+        #tosend = "".join(self.getLines()[-1])
+        #self.client.send_short_message(tosend)
+
+    def send_position(self):
+        self.client.send_position(self.get_cursor_pos().split(".")[0])
 
     def newline_check(self, *args):
         self.counter = True
         length = self.getLength()
-        if (length+1) % self.textPadWidth == 0 and length != 0:
-            self.linecount += 1
+        if length % self.textPadWidth == 0 and length != 0:
+            self.textPad.insert(END, '\n')
+            #self.linecount += 1
             self.update()
 
-        elif int(length / self.textPadWidth) != self.linecount:
-            self.linecount = int(length / self.textPadWidth)
-            self.update()
+        #elif int(length / self.textPadWidth) != self.linecount:
+        #    self.linecount = int(length / self.textPadWidth)
+        #    self.update()
 
     def getFileList(self):
         self.client.get_filelist()
@@ -123,6 +130,12 @@ class UI:
         root.mainloop()
         return self.username+','+self.password
 
+    def show_files(self, msg):
+        root = Tk()
+        w = Label(root, text=msg)
+        w.pack()
+        root.mainloop()
+
     def save_command(self):
         file = tkFileDialog.asksaveasfile(mode='w')
         if file != None:
@@ -142,7 +155,7 @@ class UI:
     def share_command(self):
         data = self.textPad.get('1.0', END + '-1c')
         self.client.send_long_message(data)
-        print("sdfgh")
+        #print("sdfgh")
 
     def open_shared_command(self):
         print "Opening file on the server side.."

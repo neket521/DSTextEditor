@@ -1,7 +1,8 @@
 from Client.client_protocol import Client
 from GUI.GUI import UI
-from threading import Thread
+from time import asctime, localtime
 import logging
+import threading
 
 FORMAT = '%(asctime)s %(message)s'
 logging.basicConfig(level=logging.INFO, format=FORMAT)
@@ -29,7 +30,7 @@ def client_main(args):
         logging.info('\n Message published')
 
     def on_authorized():
-        t = Thread(name='InputProcessor', target=ui.init)
+        t = threading.Thread(name='InputProcessor', target=ui.init)
         t.start()
 
     c.set_on_published_callback(on_publish)

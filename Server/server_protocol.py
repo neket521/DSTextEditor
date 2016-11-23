@@ -3,7 +3,8 @@ from socket import AF_INET, SOCK_STREAM, socket
 from socket import error as soc_err
 from time import time
 from common import DEFAULT_BUFSIZE, RSP_UNKNCONTROL, REQ_SEND, RSP_OK_AUTH, RSP_ERR_AUTH, \
-    MSG_SEP, MSG_FIELD_SEP, RSP_OK_SEND, RSP_OK_GET, RSP_NOTIFY, RSP_BADFORMAT, REQ_GET, REQ_AUTH, REQ_GETF, RSP_OK_GETF
+    MSG_SEP, MSG_FIELD_SEP, RSP_OK_SEND, RSP_OK_GET, RSP_NOTIFY, RSP_BADFORMAT, REQ_GET, REQ_AUTH, REQ_GETF, RSP_OK_GETF, \
+    REQ_SENDF, RSP_OK_SP,REQ_SP
 import logging, uuid, os
 
 FORMAT = '%(asctime)s (%(threadName)-2s) %(message)s'
@@ -77,9 +78,31 @@ class ClientSession(Thread):
                 msgs = map(lambda x: ' '.join(map(str, x)), msgs)
                 msgs = MSG_FIELD_SEP.join(tuple(msgs))
                 return RSP_OK_GET + MSG_FIELD_SEP + msgs
+            elif message.startswith(REQ_SP + MSG_FIELD_SEP):
+                msg = message.split(MSG_FIELD_SEP)[1]
+                LOG.info("Line " + msg)
+                return RSP_OK_SP + MSG_FIELD_SEP
             elif message.startswith(REQ_GETF + MSG_FIELD_SEP):
-                msg = "Tipa tut fajllist"
+                with open('Server/Database/' + "filelist.txt", 'r') as f:
+                    msg = f.read()
+                f.close()
                 return RSP_OK_GETF + MSG_FIELD_SEP + msg
+            elif message.startswith(REQ_SENDF + MSG_FIELD_SEP):
+                with open('Server/Database/Server_files/' + "f1.txt", 'wb') as f:
+                    LOG.info('file opened')
+                    LOG.info('receiving data...')
+                    while True:
+                        msg = self.__s.recv(DEFAULT_BUFSIZE)
+                        #print(msg.split(":"))
+                        m = msg.split(":")[1]
+                        #print(m)
+                        f.write(m)
+                        if msg.startswith(REQ_SENDF + MSG_FIELD_SEP):
+                            break
+                return "msg"
+                f.close()
+                LOG.info('Successfully got the file')
+                #return RSP_OK_SENDF + MSG_FIELD_SEP
             else:
                 LOG.debug('Unknown control message received: %s ' % message)
                 return RSP_UNKNCONTROL
@@ -131,6 +154,7 @@ class ClientSession(Thread):
             rsp = self.__protocol_rcv(m)
             if not self.__session_send(rsp):
                 break
+
 
     def get_passwd_hash_by_username(self, username):
         dir = os.path.dirname(__file__)
