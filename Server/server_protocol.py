@@ -87,8 +87,10 @@ class ClientSession(Thread):
             if p == self.get_passwd_hash_by_username(u):
                 self.__login = u
                 self.__token = uuid.uuid4().hex
+                LOG.info('Auth success, token sent back')
                 return RSP_OK_AUTH + MSG_FIELD_SEP + self.__token
             else:
+                LOG.info('Auth failed')
                 return RSP_ERR_AUTH
         else:
             # authentication failed
