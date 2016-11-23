@@ -11,7 +11,6 @@ class UI:
     def __init__(self, client):
         self.client = client
 
-
     def init(self):
         self.root = Tkinter.Tk(className=" Awesome distributed text editor")
         self.textPadWidth = 80
