@@ -3,7 +3,8 @@ from threading import Lock
 from socket import AF_INET, SOCK_STREAM, socket, SHUT_RD
 from socket import error as soc_err
 from common import DEFAULT_BUFSIZE, RSP_UNKNCONTROL, REQ_SEND, RSP_OK_AUTH, RSP_ERR_AUTH, \
-    MSG_SEP, MSG_FIELD_SEP, RSP_OK_SEND, RSP_OK_GET, RSP_NOTIFY, REQ_GET, REQ_AUTH, RSP_OK_GETF, REQ_GETF, REQ_SP, RSP_OK_SP, REQ_SENDF
+    MSG_SEP, MSG_FIELD_SEP, RSP_OK_SEND, RSP_OK_GET, RSP_NOTIFY, REQ_GET, REQ_AUTH, \
+    RSP_OK_GETF, REQ_GETF, REQ_SP, RSP_OK_SP, REQ_SENDF, REQ_SFN,RSP_OK_SFN
 
 FORMAT = '%(asctime)s (%(threadName)-2s) %(message)s'
 logging.basicConfig(level=logging.INFO, format=FORMAT)
@@ -16,7 +17,11 @@ class Client():
         self.__on_recv_filelist = None
         self.__on_published = None
         self.__on_authorized = None
+        self.__on_recv_file = None
         self.__token = None
+
+    def set_on_recv_file_callback(self, on_recv_file_f):
+        self.__on_recv_file = on_recv_file_f
 
     def set_on_recv_callback(self, on_recv_f):
         self.__on_recv = on_recv_f
@@ -121,6 +126,10 @@ class Client():
             logging.debug('Filelist received ...')
             m = message[3:] #RSP_OK_GETF has already 2 symbols + 1 for separator ':' = offset of 3
             self.__on_recv_filelist(m)
+        elif message.startswith(RSP_OK_SFN + MSG_FIELD_SEP):
+            logging.debug('File received ...')
+            m = message[3:]
+            self.get_file(m)
         elif message.startswith(RSP_OK_SP + MSG_FIELD_SEP):
             logging.debug('Line available ...')
             #print("line")
@@ -167,6 +176,11 @@ class Client():
         req = REQ_GETF + MSG_FIELD_SEP + 'getFiles'
         return self.__session_send(req)
 
+    def send_filename(self,message):
+        logging.info("sending filename")
+        req = REQ_SFN + MSG_FIELD_SEP + message
+        return self.__session_send(req)
+
     # send the whole file
     def send_long_message(self, message):
         # split message into chunks of size DEFAULT_BUFSIZE and send all the chunks to server
@@ -177,9 +191,12 @@ class Client():
         for chunk in l:
             req = REQ_SEND + MSG_FIELD_SEP + "".join(chunk)
             self.__session_send(req)
-            print chunk
         req = REQ_SENDF + MSG_FIELD_SEP
         self.__session_send(req)
         logging.info("long message sending complete")
+
+    def get_file(self,message):
+        self.__on_recv_file(message)
+
 
 

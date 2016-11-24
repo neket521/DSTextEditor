@@ -29,16 +29,24 @@ def client_main(args):
         logging.info('\n Message published')
 
     def on_authorized():
-        t = threading.Thread(name='InputProcessor', target=ui.init)
-        t.start()
+        ui.getFileList()
+        #t = threading.Thread(name='InputProcessor', target=ui.getFileList())
+        #t.start()
 
     def on_rcv_filelist(msg):
         ui.on_filelist_received(msg)
+
+    def on_recv_file(msg):
+        ui.init()
+        # Вот этот метод  ui.put_message(msg) должен срабатывать во время работы УИ а он срабатывает только после закрытия
+        ui.put_message(msg)
+
 
     c.set_on_published_callback(on_publish)
     c.set_on_recv_callback(on_recv)
     c.set_on_authorized_callback(on_authorized)
     c.set_on_recv_filelist_callback(on_rcv_filelist)
+    c.set_on_recv_file_callback(on_recv_file)
 
     if c.connect((args.host, int(args.port))):
         u, p = ui.getpwd().split(',')

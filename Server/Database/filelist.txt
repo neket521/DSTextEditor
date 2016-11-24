@@ -1,3 +1,3 @@
-f1.txt;anton;nikita,elmar
+f1.txt;anton;nikita;elmar
 f2.txt;anton;
 f3.txt;nikita;anton
