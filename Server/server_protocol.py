@@ -2,9 +2,10 @@ from threading import Thread, Lock
 from socket import AF_INET, SOCK_STREAM, socket
 from socket import error as soc_err
 from time import time
+from queue import Queue
 from common import DEFAULT_BUFSIZE, RSP_UNKNCONTROL, REQ_SEND, RSP_OK_AUTH, RSP_ERR_AUTH, \
     MSG_SEP, MSG_FIELD_SEP, RSP_OK_SEND, RSP_OK_GET, RSP_NOTIFY, RSP_BADFORMAT, REQ_GET, REQ_AUTH, REQ_GETF, RSP_OK_GETF, \
-    REQ_SENDF, RSP_OK_SP,REQ_SP
+    REQ_SENDF, RSP_OK_SP, REQ_SP, RSP_OK_SENDF
 import logging, uuid, os
 
 FORMAT = '%(asctime)s (%(threadName)-2s) %(message)s'
@@ -13,22 +14,24 @@ LOG = logging.getLogger()
 
 
 class ClientSession(Thread):
+
     def __init__(self, soc, soc_addr, server):
         Thread.__init__(self)
         self.__s = soc
         self.__addr = soc_addr
-        self.__m_last = 0
+        self.linenr = 0
         self.__send_lock = Lock()
         self.__serv = server
-        self.__login = ""
-        self.__token = ""
+        self.__login = ''
+        self.__token = ''
+        self.__filename = '' # when filename is updated, queue has to be reinitialized,
+                             # but before previously initialized queue should write all the changes to the file
 
     def __save_message(self, msg):
-        self.__m_last = self.__serv.save_message(msg, self.__addr)
+        self.__serv.save_message(self.__filename, self.linenr, msg, self.__addr)
 
     def __get(self):
-        msgs = self.__serv.get_messages(self.__m_last)
-        self.__m_last = 1
+        msgs = self.__serv.get_messages()
         return msgs
 
     def __session_rcv(self):
@@ -83,26 +86,29 @@ class ClientSession(Thread):
                 LOG.info("Line " + msg)
                 return RSP_OK_SP + MSG_FIELD_SEP
             elif message.startswith(REQ_GETF + MSG_FIELD_SEP):
+                msg = ''
                 with open('Server/Database/' + "filelist.txt", 'r') as f:
-                    msg = f.read()
+                    for line in f:
+                        if line.split(';')[2].__contains__(self.__login) or line.split(';')[1] == self.__login:
+                            msg += line.split(';')[0] + ',' # this could be huge
                 f.close()
                 return RSP_OK_GETF + MSG_FIELD_SEP + msg
             elif message.startswith(REQ_SENDF + MSG_FIELD_SEP):
+                # should pass filename as well
+                # filename should be saved to self.filename variable
+                # also should be possible to edit the filename
                 with open('Server/Database/Server_files/' + "f1.txt", 'wb') as f:
                     LOG.info('file opened')
                     LOG.info('receiving data...')
                     while True:
                         msg = self.__s.recv(DEFAULT_BUFSIZE)
-                        #print(msg.split(":"))
                         m = msg.split(":")[1]
-                        #print(m)
                         f.write(m)
                         if msg.startswith(REQ_SENDF + MSG_FIELD_SEP):
                             break
-                return "msg"
                 f.close()
                 LOG.info('Successfully got the file')
-                #return RSP_OK_SENDF + MSG_FIELD_SEP
+                return RSP_OK_SENDF + MSG_FIELD_SEP
             else:
                 LOG.debug('Unknown control message received: %s ' % message)
                 return RSP_UNKNCONTROL
@@ -169,10 +175,10 @@ class ClientSession(Thread):
         return result
 
 
-class Server():
+class Server:
 
     def __init__(self):
-        self.__msgs = []
+        self.__msgs = Queue()
         self.__on_save = None
         self.__lock = Lock()
 
@@ -182,8 +188,7 @@ class Server():
         self.__s = socket(AF_INET, SOCK_STREAM)
         self.__s.bind(self.__sock_addr)
         self.__s.listen(self.__backlog)
-        LOG.debug('Socket %s:%d is in listening state' \
-                  '' % self.__s.getsockname())
+        LOG.debug('Socket %s:%d is in listening state' % self.__s.getsockname())
 
     def loop(self):
         LOG.info('Falling to serving loop, press Ctrl+C to terminate ...')
@@ -214,16 +219,15 @@ class Server():
     def set_on_save_callback(self, on_save_f):
         self.__on_save = on_save_f
 
-    def save_message(self, msg, source):
+    def save_message(self, filename, line, msg, source):
         with self.__lock:
             ip, port = source
             t = time()
-            self.__msgs.append((t, ip, port, msg))
+            self.__msgs.add((t, ip, port, filename, line, msg))
         self.__on_save()
 
-    def get_messages(self, start):
+    def get_messages(self):
         msgs = []
         with self.__lock:
-            if len(self.__msgs) > 0:
-                msgs = [m for m in self.__msgs[start:]]
+            self.__msgs.get_messages()
         return msgs

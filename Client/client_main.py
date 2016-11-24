@@ -1,6 +1,5 @@
 from Client.client_protocol import Client
 from GUI.GUI import UI
-from time import asctime, localtime
 import logging
 import threading
 
@@ -12,11 +11,11 @@ ___NAME = 'DSTextEditor Client'
 ___VER = '0.1'
 ___DESC = 'Collaborative Text Editor Client'
 ___BUILT = '2016-11-24'
-___VENDOR = 'Copyright (c) Anton Prokopov, Nikita Kirienko, Elmar Abbasov'
+VENDOR = 'Copyright (c) Anton Prokopov, Nikita Kirienko, Elmar Abbasov'
 
 
 def __info():
-    return '%s version %s (%s) %s' % (___NAME, ___VER, ___BUILT, ___VENDOR)
+    return '%s version %s (%s) %s' % (___NAME, ___VER, ___BUILT, VENDOR)
 
 def client_main(args):
     c = Client()
@@ -33,9 +32,13 @@ def client_main(args):
         t = threading.Thread(name='InputProcessor', target=ui.init)
         t.start()
 
+    def on_rcv_filelist(msg):
+        ui.on_filelist_received(msg)
+
     c.set_on_published_callback(on_publish)
     c.set_on_recv_callback(on_recv)
     c.set_on_authorized_callback(on_authorized)
+    c.set_on_recv_filelist_callback(on_rcv_filelist)
 
     if c.connect((args.host, int(args.port))):
         u, p = ui.getpwd().split(',')

@@ -16,7 +16,6 @@ ___VENDOR = 'Copyright (c) Anton Prokopov, Nikita Kirienko, Elmar Abbasov'
 def __info():
     return '%s version %s (%s) %s' % (___NAME, ___VER, ___BUILT, ___VENDOR)
 
-
 def server_main(args):
     server = Server()
     server.listen((args.listenaddr, int(args.listenport)))

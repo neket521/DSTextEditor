@@ -2,8 +2,6 @@ import logging, hashlib
 from threading import Lock
 from socket import AF_INET, SOCK_STREAM, socket, SHUT_RD
 from socket import error as soc_err
-import Tkinter
-from Tkinter import *
 from common import DEFAULT_BUFSIZE, RSP_UNKNCONTROL, REQ_SEND, RSP_OK_AUTH, RSP_ERR_AUTH, \
     MSG_SEP, MSG_FIELD_SEP, RSP_OK_SEND, RSP_OK_GET, RSP_NOTIFY, REQ_GET, REQ_AUTH, RSP_OK_GETF, REQ_GETF, REQ_SP, RSP_OK_SP, REQ_SENDF
 
@@ -11,15 +9,20 @@ FORMAT = '%(asctime)s (%(threadName)-2s) %(message)s'
 logging.basicConfig(level=logging.INFO, format=FORMAT)
 
 class Client():
+
     def __init__(self):
         self.__send_lock = Lock()
         self.__on_recv = None
+        self.__on_recv_filelist = None
         self.__on_published = None
         self.__on_authorized = None
         self.__token = None
 
     def set_on_recv_callback(self, on_recv_f):
         self.__on_recv = on_recv_f
+
+    def set_on_recv_filelist_callback(self, on_recv_filelist_f):
+        self.__on_recv_filelist = on_recv_filelist_f
 
     def set_on_published_callback(self, on_published_f):
         self.__on_published = on_published_f
@@ -117,11 +120,11 @@ class Client():
         elif message.startswith(RSP_OK_GETF + MSG_FIELD_SEP):
             logging.debug('Filelist received ...')
             m = message[3:] #RSP_OK_GETF has already 2 symbols + 1 for separator ':' = offset of 3
-            #somehow need to show that message with GUI.show_files(m)
+            self.__on_recv_filelist(m)
         elif message.startswith(RSP_OK_SP + MSG_FIELD_SEP):
             logging.debug('Line available ...')
             #print("line")
-            #m = message[3:]  # RSP_OK_GETF has already 2 symbols + 1 for separator ':' = offset of 3
+            #m = message[3:]
             #self.__on_recv(m)
             #need to call update method from gui if
         else:

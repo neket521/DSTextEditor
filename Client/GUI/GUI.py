@@ -1,5 +1,6 @@
 from Tkinter import *
 from ScrolledText import *
+from Client.client_main import VENDOR
 import tkFileDialog
 import tkMessageBox
 import threading
@@ -18,14 +19,14 @@ class UI:
         self.linecount = 0
         self.old_length = -1
         self.counter = True
+        self.username = None
+        self.password = None
         self.init_menu()
         self.timer()
         self.textPad.bind("<Key>", self.newline_check)
         self.textPad.bind("<Return>", self.update)
         self.textPad.pack()
         self.root.mainloop()
-
-
 
     def init_menu(self):
         menu = Menu(self.root)
@@ -51,7 +52,6 @@ class UI:
         helpmenu = Menu(menu)
         menu.add_cascade(label="Help", menu=helpmenu)
         helpmenu.add_command(label="About...", command=self.about_command)
-
 
     #Timer
     def timer(self):
@@ -121,7 +121,6 @@ class UI:
             root.destroy()
 
         Label(root, text='Username and password').pack(side='top')
-        #Label(root, text='Password').pack(side='middle')
         userbox.pack(side='top')
         pwdbox.pack(side='top')
         pwdbox.bind('<Return>', onpwdentry)
@@ -150,12 +149,15 @@ class UI:
             self.client.stop()
 
     def about_command(self):
-        label = tkMessageBox.showinfo('Copyright (c) Anton Prokopov,\n Nikita Kirienko,\n Elmar Abbasov')
+        label = tkMessageBox.showinfo(VENDOR)
 
     def share_command(self):
         data = self.textPad.get('1.0', END + '-1c')
         self.client.send_long_message(data)
-        #print("sdfgh")
 
     def open_shared_command(self):
         print "Opening file on the server side.."
+
+    def on_filelist_received(self, filelist):
+        #filelist contains coma-separated file names to which current user has access
+        print filelist
