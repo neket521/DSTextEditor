@@ -1,18 +1,15 @@
 from Tkinter import *
 from ScrolledText import *
-#from Client.client_main import VENDOR
+from Client.client_main import VENDOR
 import tkFileDialog
 import tkMessageBox
 import threading
 import Tkinter
-from functools import partial
+
 class UI:
 
     def __init__(self, client):
         self.client = client
-
-
-
 
     def init(self):
         self.root = Tkinter.Tk(className=" Awesome distributed text editor")
@@ -131,7 +128,6 @@ class UI:
         Button(root, command=onokclick, text='OK').pack(side='bottom')
 
         root.mainloop()
-        #print(self.username + ',' + self.password)
         return self.username+','+self.password
 
     def show_files(self, msg):
