@@ -11,11 +11,11 @@ ___NAME = 'DSTextEditor Client'
 ___VER = '0.1'
 ___DESC = 'Collaborative Text Editor Client'
 ___BUILT = '2016-11-24'
-VENDOR = 'Copyright (c) Anton Prokopov, Nikita Kirienko, Elmar Abbasov'
+___VENDOR = 'Copyright (c) Anton Prokopov, Nikita Kirienko, Elmar Abbasov'
 
 
 def __info():
-    return '%s version %s (%s) %s' % (___NAME, ___VER, ___BUILT, VENDOR)
+    return '%s version %s (%s) %s' % (___NAME, ___VER, ___BUILT, ___VENDOR)
 
 def client_main(args):
     c = Client()

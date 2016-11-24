@@ -1,6 +1,5 @@
 from Tkinter import *
 from ScrolledText import *
-from Client.client_main import VENDOR
 import tkFileDialog
 import tkMessageBox
 import threading
@@ -149,7 +148,7 @@ class UI:
             self.client.stop()
 
     def about_command(self):
-        label = tkMessageBox.showinfo(VENDOR)
+        label = tkMessageBox.showinfo('Copyright (c) Anton Prokopov, Nikita Kirienko, Elmar Abbasov')
 
     def share_command(self):
         data = self.textPad.get('1.0', END + '-1c')
