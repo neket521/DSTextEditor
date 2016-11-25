@@ -4,7 +4,7 @@ from socket import AF_INET, SOCK_STREAM, socket, SHUT_RD
 from socket import error as soc_err
 from common import DEFAULT_BUFSIZE, RSP_UNKNCONTROL, REQ_SEND, RSP_OK_AUTH, RSP_ERR_AUTH, \
     MSG_SEP, MSG_FIELD_SEP, RSP_OK_SEND, RSP_OK_GET, RSP_NOTIFY, REQ_GET, REQ_AUTH, \
-    RSP_OK_GETLF, REQ_GETLF, REQ_SP, RSP_OK_SP, REQ_GETF, RSP_OK_GETF
+    RSP_OK_GETF, REQ_GETF, REQ_SP, RSP_OK_SP, REQ_GETLF, RSP_OK_GETLF
 
 FORMAT = '%(asctime)s (%(threadName)-2s) %(message)s'
 logging.basicConfig(level=logging.INFO, format=FORMAT)
@@ -128,8 +128,8 @@ class Client():
             self.__on_recv_filelist(m)
         elif message.startswith(RSP_OK_GETF + MSG_FIELD_SEP):
             logging.debug('File received ...')
-            m = message[3:]
-            self.__on_recv_file(m)
+            m = message[3:].replace(RSP_OK_GETF + MSG_FIELD_SEP,"")
+            self.get_file(m)
         elif message.startswith(RSP_OK_SP + MSG_FIELD_SEP):
             logging.debug('Line available ...')
             #print("line")
@@ -142,6 +142,7 @@ class Client():
 
     def loop(self):
         logging.info('Falling to receiver loop ...')
+        #self.__fetch_document()
         while 1:
             m = self.__session_rcv()
             if len(m) <= 0:
@@ -152,6 +153,11 @@ class Client():
         hash_obj = hashlib.md5()
         hash_obj.update(password)
         req = REQ_AUTH + MSG_FIELD_SEP + username + MSG_FIELD_SEP + hash_obj.hexdigest()
+        return self.__session_send(req)
+
+    # should be modified to fetch the whole file and the changes from the queue
+    def __fetch_document(self):
+        req = REQ_GET + MSG_FIELD_SEP
         return self.__session_send(req)
 
     # send updated line
@@ -170,24 +176,27 @@ class Client():
         req = REQ_GETLF + MSG_FIELD_SEP + 'getFiles'
         return self.__session_send(req)
 
-    def get_file_by_filename(self, message):
+    def send_filename(self,message):
         logging.info("sending filename")
         req = REQ_GETF + MSG_FIELD_SEP + message
         return self.__session_send(req)
 
     # send the whole file
-    def send_long_message(self, message):
+    #def send_long_message(self, message):
         # split message into chunks of size DEFAULT_BUFSIZE and send all the chunks to server
-        logging.info("sending long message")
-        l = [message[i:i + DEFAULT_BUFSIZE] for i in range(0, len(message), DEFAULT_BUFSIZE)]
-        req = REQ_GETF + MSG_FIELD_SEP
-        self.__session_send(req)
-        for chunk in l:
-            req = REQ_SEND + MSG_FIELD_SEP + "".join(chunk)
-            self.__session_send(req)
-        req = REQ_GETF + MSG_FIELD_SEP
-        self.__session_send(req)
-        logging.info("long message sending complete")
+     #   logging.info("sending long message")
+     #   l = [message[i:i + DEFAULT_BUFSIZE] for i in range(0, len(message), DEFAULT_BUFSIZE)]
+     #   req = REQ_SENDF + MSG_FIELD_SEP
+     #   self.__session_send(req)
+     #   for chunk in l:
+     #       req = REQ_SEND + MSG_FIELD_SEP + "".join(chunk)
+     #       self.__session_send(req)
+     #   req = REQ_SENDF + MSG_FIELD_SEP
+     #   self.__session_send(req)
+     #   logging.info("long message sending complete")
+
+    def get_file(self,message):
+        self.__on_recv_file(message)
 
 
 

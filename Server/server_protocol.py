@@ -96,20 +96,23 @@ class ClientSession(Thread):
                 return RSP_OK_GETLF + MSG_FIELD_SEP + msg
             elif message.startswith(REQ_GETF + MSG_FIELD_SEP):
                 filename = message.split(MSG_FIELD_SEP)[1]
-                print filename
-                with open('Server/UserFiles/' + filename, 'r') as f:
-                    LOG.info('file opened')
-                    LOG.info('receiving data...')
-                    #while True:
-                    #    msg = self.__s.recv(1060)
-                    #    if msg.endswith(REQ_GETF + MSG_FIELD_SEP + MSG_FIELD_SEP + self.__token + MSG_SEP):
-                    #        f.write(msg[2:-70])
-                    #        break
-                    #    f.write(msg[2:-34])
-                    m = f.readline()
-                LOG.info('Successfully read the file and sent its contents back to client')
-                f.close()
-                return RSP_OK_GETF + MSG_FIELD_SEP + m
+                if os.path.isfile('Server/UserFiles/' + filename):
+                    with open('Server/UserFiles/' + filename, 'r') as f:
+                        LOG.info('file opened')
+                        LOG.info('receiving data...')
+                        for line in f.readlines():
+                            self.__s.send(RSP_OK_GETF + MSG_FIELD_SEP + line)
+                    LOG.info('Successfully read the file and sent its contents back to client')
+                    f.close()
+                    return RSP_OK_GETF + MSG_FIELD_SEP
+                else:
+                    nf = open('Server/UserFiles/' + filename, 'w')
+                    nf.close()
+                    with open('Server/Database/' + "filelist.txt", 'a') as f:
+                        f.write('\n')
+                        f.write(filename + ";" + self.__login)
+                    f.close()
+                    return RSP_OK_GETF + MSG_FIELD_SEP
             else:
                 LOG.debug('Unknown control message received: %s ' % message)
                 return RSP_UNKNCONTROL
@@ -174,6 +177,21 @@ class ClientSession(Thread):
                 result = line.split(':')[1].strip('\n')
         f.close()
         return result
+
+    def send_file(self, filename):
+        logging.info("sending file contents")
+        f = open('Server/Database/Server_files/' + filename, 'rb')
+        l = f.read(DEFAULT_BUFSIZE)
+        #req = REQ_SENDF + MSG_FIELD_SEP
+        #self.__session_send(req)
+        while (l):
+            req = REQ_SEND + MSG_FIELD_SEP + l
+            self.__session_send(req)
+            l = f.read(1024)
+        f.close()
+        #req = REQ_SENDF + MSG_FIELD_SEP
+        #self.__session_send(req)
+        logging.info("file sending complete")
 
 
 class Server:

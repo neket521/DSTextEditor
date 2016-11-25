@@ -34,21 +34,10 @@ class UI:
         self.root.config(menu=menu)
         filemenu = Menu(menu)
         menu.add_cascade(label="File", menu=filemenu)
-        filemenu.add_command(label="New", command=self.new_command)
 
         filemenu.add_command(label="Save", command=self.save_command)
-        filemenu.add_command(label="Share", command=self.share_command)
         filemenu.add_separator()
         filemenu.add_command(label="Exit", command=self.exit_command)
-
-        openmenu = Menu(menu)
-        menu.add_cascade(label="Open...", menu=openmenu)
-        openmenu.add_command(label="Open local file", command=self.open_command)
-        openmenu.add_command(label="Open shared file", command=self.open_shared_command)
-
-        getmenu = Menu(menu)
-        menu.add_cascade(label="Get", menu=getmenu)
-        getmenu.add_command(label = "Files on the server", command=self.getFileList)
 
         helpmenu = Menu(menu)
         menu.add_cascade(label="Help", menu=helpmenu)
@@ -96,16 +85,6 @@ class UI:
     def getFileList(self):
         self.client.get_filelist()
 
-    def new_command(self):
-        self.textPad.delete('1.0', END)
-
-    def open_command(self):
-        file = tkFileDialog.askopenfile(parent=self.root, mode='rb', title='Select a file')
-        if file != None:
-            contents = file.read()
-            self.textPad.insert('1.0', contents)
-            file.close()
-
     def getpwd(self):
         root = Tk()
         userbox = Entry(root)
@@ -126,7 +105,6 @@ class UI:
         pwdbox.pack(side='top')
         pwdbox.bind('<Return>', onpwdentry)
         Button(root, command=onokclick, text='OK').pack(side='bottom')
-
         root.mainloop()
         return self.username+','+self.password
 
@@ -156,12 +134,6 @@ class UI:
     def about_command(self):
         label = tkMessageBox.showinfo('Copyright (c) Anton Prokopov, Nikita Kirienko, Elmar Abbasov')
 
-    def share_command(self):
-        data = self.textPad.get('1.0', END + '-1c')
-        self.client.send_long_message(data)
-
-    def open_shared_command(self):
-        print "Opening file on the server side.."
 
     def on_filelist_received(self, filelist):
         #filelist contains coma-separated file names to which current user has access
@@ -187,4 +159,4 @@ class UI:
         filenamebox.bind('<Return>', onpwdentry)
         root.mainloop()
         #print self.newfilename
-        self.client.get_file_by_filename(self.newfilename)
+        self.client.send_filename(self.newfilename)
