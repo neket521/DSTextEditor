@@ -4,8 +4,8 @@ from socket import error as soc_err
 from time import time
 from queue import Queue
 from common import DEFAULT_BUFSIZE, RSP_UNKNCONTROL, REQ_SEND, RSP_OK_AUTH, RSP_ERR_AUTH, \
-    MSG_SEP, MSG_FIELD_SEP, RSP_OK_SEND, RSP_OK_GET, RSP_NOTIFY, RSP_BADFORMAT, REQ_GET, REQ_AUTH, REQ_GETF, RSP_OK_GETF, \
-    REQ_SENDF, RSP_OK_SP, REQ_SP, RSP_OK_SENDF,REQ_SFN,RSP_OK_SFN
+    MSG_SEP, MSG_FIELD_SEP, RSP_OK_SEND, RSP_OK_GET, RSP_NOTIFY, RSP_BADFORMAT, REQ_GET, REQ_AUTH, REQ_GETLF, RSP_OK_GETLF, \
+    REQ_GETF, RSP_OK_SP, REQ_SP, RSP_OK_GETF
 import logging, uuid, os
 
 FORMAT = '%(asctime)s (%(threadName)-2s) %(message)s'
@@ -85,11 +85,7 @@ class ClientSession(Thread):
                 msg = message.split(MSG_FIELD_SEP)[1]
                 LOG.info("Line " + msg)
                 return RSP_OK_SP + MSG_FIELD_SEP + msg
-            elif message.startswith(REQ_SFN + MSG_FIELD_SEP):
-                msg = message.split(MSG_FIELD_SEP)[1]
-                LOG.info("Filename " + msg)
-                return RSP_OK_SFN + MSG_FIELD_SEP + msg
-            elif message.startswith(REQ_GETF + MSG_FIELD_SEP):
+            elif message.startswith(REQ_GETLF + MSG_FIELD_SEP):
                 msg = ''
                 with open('Server/Database/' + "filelist.txt", 'r') as f:
                     for line in f:
@@ -97,23 +93,23 @@ class ClientSession(Thread):
                             msg += line.split(';')[0] + ',' # this could be huge
                 f.close()
                 LOG.info('Filelist sent')
-                #print(msg)
-                return RSP_OK_GETF + MSG_FIELD_SEP + msg
-
-            elif message.startswith(REQ_SENDF + MSG_FIELD_SEP):
-                with open('Server/Database/Server_files/' + "f1.txt", 'wb') as f:
+                return RSP_OK_GETLF + MSG_FIELD_SEP + msg
+            elif message.startswith(REQ_GETF + MSG_FIELD_SEP):
+                filename = message.split(MSG_FIELD_SEP)[1]
+                print filename
+                with open('Server/UserFiles/' + filename, 'r') as f:
                     LOG.info('file opened')
                     LOG.info('receiving data...')
-                    while True:
-                        msg = self.__s.recv(1060)
-                        #print(msg)
-                        if msg.endswith(REQ_SENDF + MSG_FIELD_SEP + MSG_FIELD_SEP + self.__token + ';'):
-                            f.write(msg[2:-70])
-                            break
-                        f.write(msg[2:-34])
-                LOG.info('Successfully got the file')
+                    #while True:
+                    #    msg = self.__s.recv(1060)
+                    #    if msg.endswith(REQ_GETF + MSG_FIELD_SEP + MSG_FIELD_SEP + self.__token + MSG_SEP):
+                    #        f.write(msg[2:-70])
+                    #        break
+                    #    f.write(msg[2:-34])
+                    m = f.readline()
+                LOG.info('Successfully read the file and sent its contents back to client')
                 f.close()
-                return RSP_OK_SENDF + MSG_FIELD_SEP
+                return RSP_OK_GETF + MSG_FIELD_SEP + m
             else:
                 LOG.debug('Unknown control message received: %s ' % message)
                 return RSP_UNKNCONTROL

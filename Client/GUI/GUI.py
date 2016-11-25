@@ -1,6 +1,5 @@
 from Tkinter import *
 from ScrolledText import *
-from Client.client_main import VENDOR
 import tkFileDialog
 import tkMessageBox
 import threading
@@ -11,7 +10,7 @@ class UI:
     def __init__(self, client):
         self.client = client
 
-    def init(self):
+    def init(self, file_content):
         self.root = Tkinter.Tk(className=" Awesome distributed text editor")
         self.textPadWidth = 80
         self.textPad = ScrolledText(self.root, width=self.textPadWidth, height=20)
@@ -27,6 +26,7 @@ class UI:
         self.textPad.bind("<Key>", self.newline_check)
         self.textPad.bind("<Return>", self.update)
         self.textPad.pack()
+        self.textPad.insert('1.0', file_content)
         self.root.mainloop()
 
     def init_menu(self):
@@ -154,7 +154,7 @@ class UI:
             self.client.stop()
 
     def about_command(self):
-        label = tkMessageBox.showinfo(VENDOR)
+        label = tkMessageBox.showinfo('Copyright (c) Anton Prokopov, Nikita Kirienko, Elmar Abbasov')
 
     def share_command(self):
         data = self.textPad.get('1.0', END + '-1c')
@@ -187,4 +187,4 @@ class UI:
         filenamebox.bind('<Return>', onpwdentry)
         root.mainloop()
         #print self.newfilename
-        self.client.send_filename(self.newfilename)
+        self.client.get_file_by_filename(self.newfilename)

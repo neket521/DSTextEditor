@@ -30,16 +30,13 @@ def client_main(args):
 
     def on_authorized():
         ui.getFileList()
-        #t = threading.Thread(name='InputProcessor', target=ui.getFileList())
-        #t.start()
 
     def on_rcv_filelist(msg):
         ui.on_filelist_received(msg)
 
     def on_recv_file(msg):
-        ui.init()
-        # Вот этот метод  ui.put_message(msg) должен срабатывать во время работы УИ а он срабатывает только после закрытия
-        ui.put_message(msg)
+        t = threading.Thread(name='InputProcessor', target=ui.init(msg))
+        t.start()
 
 
     c.set_on_published_callback(on_publish)
