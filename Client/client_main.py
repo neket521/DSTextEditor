@@ -40,7 +40,6 @@ def client_main(args):
 
     def on_recv_file(msg):
         ui.init(msg)
-        ui.start()
 
 
     c.set_on_published_callback(on_publish)

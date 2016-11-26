@@ -9,10 +9,17 @@ class UI(threading.Thread):
 
     def __init__(self, client):
         self.client = client
+        self.f_content = None
         threading.Thread.__init__(self)
 
 
     def init(self, file_content):
+        self.f_content = file_content
+        self.start()
+
+
+
+    def run(self):
         self.root = Tkinter.Tk(className=" Awesome distributed text editor")
         self.textPadWidth = 80
         self.textPad = ScrolledText(self.root, width=self.textPadWidth, height=20)
@@ -25,14 +32,22 @@ class UI(threading.Thread):
         self.sharewith = None
         self.filename = None
         self.init_menu()
-        self.update()
         self.textPad.bind("<Key>", self.newline_check)
         self.textPad.bind("<KeyRelease>", self.put_message)
         self.textPad.bind("<Return>", self.send_position)
         self.textPad.pack()
-        self.textPad.insert('1.0', file_content)
+        self.textPad.insert('1.0', self.f_content)
+        self.send_position()
 
-    def run(self):
+        def update():
+            l = self.getLength()
+            if (self.old_length == l and l != 0 and self.counter and self.getLines()[-1] != []):
+                self.send_message()
+                self.counter = False
+            self.old_length = l
+            self.root.after(5000, update)
+
+        self.root.after(5000, update)
         self.root.mainloop()
 
     def init_menu(self):
@@ -49,15 +64,6 @@ class UI(threading.Thread):
         menu.add_cascade(label="Help", menu=helpmenu)
         helpmenu.add_command(label="About...", command=self.about_command)
 
-    def update(self, *args):
-        print("update")
-        l = self.getLength()
-        if (self.old_length == l and l != 0 and self.counter and self.getLines()[-1] != []):
-            #self.send_position()
-            self.counter = False
-        self.old_length = l
-        self.root.after(5000, self.update)
-
     def getLength(self):
         return len(self.textPad.get('1.0', END + '-1c'))
 
@@ -69,13 +75,12 @@ class UI(threading.Thread):
         return [text[i:i + self.textPadWidth] for i in range(0, len(text), self.textPadWidth)]
 
 
-    def update(self, *args):
+    def send_message(self, *args):
         tosend = "".join(self.getLines()[-1])
         self.client.send_short_message(tosend)
 
     def send_position(self, *args):
         self.client.send_position(self.get_cursor_pos().split(".")[0])
-        self.update()
 
     def newline_check(self, *args):
         self.counter = True
@@ -84,7 +89,7 @@ class UI(threading.Thread):
             self.textPad.insert(END, '\n')
             #self.linecount += 1
             self.send_position()
-
+            self.send_message()
         #elif int(length / self.textPadWidth) != self.linecount:
         #    self.linecount = int(length / self.textPadWidth)
         #    self.update()
