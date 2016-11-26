@@ -39,9 +39,9 @@ def client_main(args):
         ui.on_filelist_received(msg)
 
     def on_recv_file(msg):
-        t = threading.Thread(name='InputProcessor', target=ui.init(msg))
+        ui.init(msg)
         ui.start()
-        t.start()
+
 
     c.set_on_published_callback(on_publish)
     c.set_on_recv_callback(on_recv)

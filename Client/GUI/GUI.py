@@ -25,7 +25,7 @@ class UI(threading.Thread):
         self.sharewith = None
         self.filename = None
         self.init_menu()
-        self.timer()
+        self.update()
         self.textPad.bind("<Key>", self.newline_check)
         self.textPad.bind("<KeyRelease>", self.put_message)
         self.textPad.bind("<Return>", self.send_position)
@@ -40,25 +40,23 @@ class UI(threading.Thread):
         self.root.config(menu=menu)
         filemenu = Menu(menu)
         menu.add_cascade(label="File", menu=filemenu)
-
         filemenu.add_command(label="Save", command=self.save_command)
         filemenu.add_command(label="Open", command=self.open_command)
         filemenu.add_command(label="Share", command=self.share_command)
         filemenu.add_separator()
         filemenu.add_command(label="Exit", command=self.exit_command)
-
         helpmenu = Menu(menu)
         menu.add_cascade(label="Help", menu=helpmenu)
         helpmenu.add_command(label="About...", command=self.about_command)
 
-    #Timer
-    def timer(self):
+    def update(self, *args):
+        print("update")
         l = self.getLength()
-        if(self.old_length == l and l !=0 and self.counter and self.getLines()[-1] != []):
-            self.send_position()
+        if (self.old_length == l and l != 0 and self.counter and self.getLines()[-1] != []):
+            #self.send_position()
             self.counter = False
         self.old_length = l
-        threading.Timer(5, self.timer).start()
+        self.root.after(5000, self.update)
 
     def getLength(self):
         return len(self.textPad.get('1.0', END + '-1c'))
