@@ -252,7 +252,7 @@ class Server:
             if el[0] == linenr and el[1] != user:
                 return False
             elif el[0] == linenr and el[1] == user:
-                self.unlock_line(linenr, user)
+                return True
         self.__locked_lines.append((linenr, user))
         print self.__locked_lines
         return True

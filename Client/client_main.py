@@ -23,9 +23,9 @@ def client_main(args):
 
     def on_recv(msg):
         if len(msg) > 0:
-            print msg
             if isinstance(msg, int):
-                ui.set_cursor_pos(int(msg))
+                print msg
+                ui.root.after(10, ui.set_cursor_pos(int(msg)))
             else:
                 logging.info('\n%s' % msg)
 

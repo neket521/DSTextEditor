@@ -136,10 +136,8 @@ class Client():
             logging.debug('Line available ...')
             messages = message.split(MSG_SEP)
             m = messages[len(messages)-1][3:]
-            print 'you can write to line: '+ m
-            if m != '':
-                self.__on_recv(m)
-            #need to call update method from gui if
+            print 'you can write to line: '+ str(m)
+            self.__on_recv(m)
         else:
             logging.debug('Unknown control message received: %s ' % message)
             return RSP_UNKNCONTROL
