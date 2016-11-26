@@ -24,6 +24,7 @@ class ClientSession(Thread):
         self.__serv = server
         self.__login = ''
         self.__token = ''
+        self.__last_linenr = None
         self.__filename = '' # when filename is updated, queue has to be reinitialized,
                              # but before previously initialized queue should write all the changes to the file
 
@@ -82,22 +83,32 @@ class ClientSession(Thread):
                 msgs = MSG_FIELD_SEP.join(tuple(msgs))
                 return RSP_OK_GET + MSG_FIELD_SEP + msgs
             elif message.startswith(REQ_SP + MSG_FIELD_SEP):
-                msg = message.split(MSG_FIELD_SEP)[1]
-                LOG.info("Line " + msg)
-                return RSP_OK_SP + MSG_FIELD_SEP + msg
+                linenr = int(message.split(MSG_FIELD_SEP)[1])
+                if self.__last_linenr != linenr:
+                    self.__serv.unlock_line(self.__last_linenr, self.__login)
+                    self.__serv.lock_line(linenr, self.__login)
+                else:
+                    while not self.__serv.lock_line(linenr, self.__login):
+                        linenr += 1
+                self.__last_linenr = linenr
+                LOG.info("Line " + str(linenr))
+                return RSP_OK_SP + MSG_FIELD_SEP + str(linenr)
             elif message.startswith(REQ_GETLF + MSG_FIELD_SEP):
                 msg = ''
                 with open('Server/Database/' + "filelist.txt", 'r') as f:
                     for line in f:
-                        if line.split(';')[2].__contains__(self.__login) or line.split(';')[1] == self.__login:
-                            msg += line.split(';')[0] + ',' # this could be huge
+                        line_parts = line.split(';')
+                        if line_parts[2].__contains__(self.__login) or line_parts[1] == self.__login:
+                            msg += line_parts[0] + ',' # this could be huge
                 f.close()
                 LOG.info('Filelist sent')
                 return RSP_OK_GETLF + MSG_FIELD_SEP + msg
             elif message.startswith(REQ_GETF + MSG_FIELD_SEP):
-                filename = message.split(MSG_FIELD_SEP)[1]
-                if os.path.isfile('Server/UserFiles/' + filename):
-                    with open('Server/UserFiles/' + filename, 'r') as f:
+                self.filename = message.split(MSG_FIELD_SEP)[1]
+                if not self.filename.__contains__('.txt'):
+                    self.filename += '.txt'
+                if os.path.isfile('Server/UserFiles/' + self.filename):
+                    with open('Server/UserFiles/' + self.filename, 'r') as f:
                         LOG.info('file opened')
                         LOG.info('receiving data...')
                         for line in f.readlines():
@@ -106,11 +117,11 @@ class ClientSession(Thread):
                     f.close()
                     return RSP_OK_GETF + MSG_FIELD_SEP
                 else:
-                    nf = open('Server/UserFiles/' + filename, 'w')
+                    nf = open('Server/UserFiles/' + self.filename, 'w')
                     nf.close()
                     with open('Server/Database/' + "filelist.txt", 'a') as f:
                         f.write('\n')
-                        f.write(filename + ";" + self.__login)
+                        f.write(self.filename + ';' + self.__login + ';')
                     f.close()
                     return RSP_OK_GETF + MSG_FIELD_SEP
             else:
@@ -125,12 +136,12 @@ class ClientSession(Thread):
                 return RSP_OK_AUTH + MSG_FIELD_SEP + self.__token
             else:
                 LOG.info('Auth failed')
-                return RSP_ERR_AUTH
+                return RSP_ERR_AUTH + MSG_FIELD_SEP
 
         else:
             # authentication failed
             LOG.info('Auth failed')
-            return RSP_ERR_AUTH
+            return RSP_ERR_AUTH + MSG_FIELD_SEP
 
     def __session_send(self, msg):
         m = msg + MSG_SEP
@@ -178,28 +189,13 @@ class ClientSession(Thread):
         f.close()
         return result
 
-    def send_file(self, filename):
-        logging.info("sending file contents")
-        f = open('Server/Database/Server_files/' + filename, 'rb')
-        l = f.read(DEFAULT_BUFSIZE)
-        #req = REQ_SENDF + MSG_FIELD_SEP
-        #self.__session_send(req)
-        while (l):
-            req = REQ_SEND + MSG_FIELD_SEP + l
-            self.__session_send(req)
-            l = f.read(1024)
-        f.close()
-        #req = REQ_SENDF + MSG_FIELD_SEP
-        #self.__session_send(req)
-        logging.info("file sending complete")
-
-
 class Server:
 
     def __init__(self):
         self.__msgs = Queue()
         self.__on_save = None
         self.__lock = Lock()
+        self.__locked_lines = []
 
     def listen(self, sock_addr, backlog=1):
         self.__sock_addr = sock_addr
@@ -213,11 +209,11 @@ class Server:
         LOG.info('Falling to serving loop, press Ctrl+C to terminate ...')
         clients = []
 
-        def __on_publish():
+        def __on_save_message():
             for c in clients:
                 c.notify()
 
-        self.set_on_save_callback(__on_publish)
+        self.set_on_save_callback(__on_save_message)
 
         try:
             while 1:
@@ -250,3 +246,19 @@ class Server:
         with self.__lock:
             self.__msgs.get_messages()
         return msgs
+
+    def lock_line(self, linenr, user):
+        for el in self.__locked_lines:
+            if el[0] == linenr and el[1] != user:
+                return False
+            elif el[0] == linenr and el[1] == user:
+                self.unlock_line(linenr, user)
+        self.__locked_lines.append((linenr, user))
+        print self.__locked_lines
+        return True
+
+    def unlock_line(self, linenr, user):
+        for el in self.__locked_lines:
+            if el[0] == linenr and el[1] == user:
+                self.__locked_lines.remove((linenr, user))
+        print self.__locked_lines

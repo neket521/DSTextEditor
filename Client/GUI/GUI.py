@@ -2,7 +2,6 @@ from Tkinter import *
 from ScrolledText import *
 import tkFileDialog
 import tkMessageBox
-import threading
 import Tkinter
 
 class UI:
@@ -22,11 +21,11 @@ class UI:
         self.password = None
         self.newfilename = None
         self.init_menu()
-        self.timer()
         self.textPad.bind("<Key>", self.newline_check)
         self.textPad.bind("<Return>", self.update)
         self.textPad.pack()
         self.textPad.insert('1.0', file_content)
+        self.update()
         self.root.mainloop()
 
     def init_menu(self):
@@ -43,20 +42,14 @@ class UI:
         menu.add_cascade(label="Help", menu=helpmenu)
         helpmenu.add_command(label="About...", command=self.about_command)
 
-    #Timer
-    def timer(self):
-        l = self.getLength()
-        if(self.old_length == l and l !=0 and self.counter and self.getLines()[-1] != []):
-            self.update()
-            self.counter = False
-        self.old_length = l
-        threading.Timer(5, self.timer).start()
-
     def getLength(self):
         return len(self.textPad.get('1.0', END + '-1c'))
 
     def get_cursor_pos(self):
         return self.textPad.index(INSERT)
+
+    def set_cursor_pos(self, linenr):
+        print 'UI, line received: '+str(linenr)
 
     def getLines(self):
         text = self.textPad.get('1.0', END + '-1c').encode("utf-8").split('\n')
@@ -64,6 +57,11 @@ class UI:
 
     def update(self, *args):
         self.send_position()
+        l = self.getLength()
+        #if (self.old_length == l and l != 0 and self.counter and self.getLines()[-1] != []):
+        self.root.after(5000, self.update)
+        self.counter = False
+        self.old_length = l
         #tosend = "".join(self.getLines()[-1])
         #self.client.send_short_message(tosend)
 

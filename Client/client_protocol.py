@@ -19,6 +19,7 @@ class Client():
         self.__on_authorized = None
         self.__on_recv_file = None
         self.__token = None
+        self._auth_failed = False
 
     def set_on_recv_file_callback(self, on_recv_file_f):
         self.__on_recv_file = on_recv_file_f
@@ -108,8 +109,9 @@ class Client():
         if message.startswith(RSP_OK_SEND + MSG_FIELD_SEP):
             logging.debug('Server confirmed message was published')
             self.__on_published()
-        elif message.startswith(RSP_ERR_AUTH):
-            logging.debug('Not authorized')
+        elif message.startswith(RSP_ERR_AUTH + MSG_FIELD_SEP):
+            logging.info('Not authorized')
+            self._auth_failed = True
         elif message.startswith(RSP_OK_AUTH + MSG_FIELD_SEP):
             token = message.split(MSG_FIELD_SEP)[1]
             self.__token = token
@@ -129,12 +131,14 @@ class Client():
         elif message.startswith(RSP_OK_GETF + MSG_FIELD_SEP):
             logging.debug('File received ...')
             m = message[3:].replace(RSP_OK_GETF + MSG_FIELD_SEP,"")
-            self.get_file(m)
+            self.__on_recv_file(m)
         elif message.startswith(RSP_OK_SP + MSG_FIELD_SEP):
             logging.debug('Line available ...')
-            #print("line")
-            #m = message[3:]
-            #self.__on_recv(m)
+            messages = message.split(MSG_SEP)
+            m = messages[len(messages)-1][3:]
+            print 'you can write to line: '+ m
+            if m != '':
+                self.__on_recv(m)
             #need to call update method from gui if
         else:
             logging.debug('Unknown control message received: %s ' % message)
@@ -142,8 +146,9 @@ class Client():
 
     def loop(self):
         logging.info('Falling to receiver loop ...')
-        #self.__fetch_document()
         while 1:
+            if self._auth_failed:
+                break
             m = self.__session_rcv()
             if len(m) <= 0:
                 break
@@ -155,11 +160,6 @@ class Client():
         req = REQ_AUTH + MSG_FIELD_SEP + username + MSG_FIELD_SEP + hash_obj.hexdigest()
         return self.__session_send(req)
 
-    # should be modified to fetch the whole file and the changes from the queue
-    def __fetch_document(self):
-        req = REQ_GET + MSG_FIELD_SEP
-        return self.__session_send(req)
-
     # send updated line
     def send_short_message(self, message):
         logging.info("sending short message")
@@ -167,7 +167,7 @@ class Client():
         return self.__session_send(req)
 
     def send_position(self, message):
-        logging.info("sending current line number")
+        logging.info("sending current line number: "+message)
         req = REQ_SP + MSG_FIELD_SEP + message
         return self.__session_send(req)
 
@@ -180,23 +180,5 @@ class Client():
         logging.info("sending filename")
         req = REQ_GETF + MSG_FIELD_SEP + message
         return self.__session_send(req)
-
-    # send the whole file
-    #def send_long_message(self, message):
-        # split message into chunks of size DEFAULT_BUFSIZE and send all the chunks to server
-     #   logging.info("sending long message")
-     #   l = [message[i:i + DEFAULT_BUFSIZE] for i in range(0, len(message), DEFAULT_BUFSIZE)]
-     #   req = REQ_SENDF + MSG_FIELD_SEP
-     #   self.__session_send(req)
-     #   for chunk in l:
-     #       req = REQ_SEND + MSG_FIELD_SEP + "".join(chunk)
-     #       self.__session_send(req)
-     #   req = REQ_SENDF + MSG_FIELD_SEP
-     #   self.__session_send(req)
-     #   logging.info("long message sending complete")
-
-    def get_file(self,message):
-        self.__on_recv_file(message)
-
 
 
