@@ -5,7 +5,7 @@ from time import time
 from queue import Queue
 from common import DEFAULT_BUFSIZE, RSP_UNKNCONTROL, REQ_SEND, RSP_OK_AUTH, RSP_ERR_AUTH, \
     MSG_SEP, MSG_FIELD_SEP, RSP_OK_SEND, RSP_OK_GET, RSP_NOTIFY, RSP_BADFORMAT, REQ_GET, REQ_AUTH, REQ_GETLF, RSP_OK_GETLF, \
-    REQ_GETF, RSP_OK_SP, REQ_SP, RSP_OK_GETF
+    REQ_GETF, RSP_OK_SP, REQ_SP, RSP_OK_GETF,REQ_SHR
 import logging, uuid, os
 
 FORMAT = '%(asctime)s (%(threadName)-2s) %(message)s'
@@ -103,6 +103,23 @@ class ClientSession(Thread):
                 f.close()
                 LOG.info('Filelist sent')
                 return RSP_OK_GETLF + MSG_FIELD_SEP + msg
+            elif message.startswith(REQ_SHR + MSG_FIELD_SEP):
+                msg = message.split(MSG_FIELD_SEP)[1]
+                lines = []
+                with open('Server/Database/' + "filelist.txt", 'r') as f:
+                    for line in f:
+                        lines.append(line)
+                f.close()
+                with open('Server/Database/' + "filelist.txt", 'w') as f:
+                    for line in lines:
+                        if line.split(';')[0] == msg.split(",")[0]:
+                            if not line.split(';')[2].__contains__(msg.split(",")[1]) or not line.split(';')[1] == msg.split(",")[1]:
+                                line += ',' + msg.split(",")[1]
+
+                        f.write(line)
+                f.close()
+                LOG.info('User added to share')
+                return "m"
             elif message.startswith(REQ_GETF + MSG_FIELD_SEP):
                 self.filename = message.split(MSG_FIELD_SEP)[1]
                 if not self.filename.__contains__('.txt'):
@@ -110,6 +127,7 @@ class ClientSession(Thread):
                 if os.path.isfile('Server/UserFiles/' + self.filename):
                     with open('Server/UserFiles/' + self.filename, 'r') as f:
                         LOG.info('file opened')
+                        LOG.info('receiving data...')
                         LOG.info('receiving data...')
                         for line in f.readlines():
                             self.__s.send(RSP_OK_GETF + MSG_FIELD_SEP + line)
@@ -122,6 +140,8 @@ class ClientSession(Thread):
                     with open('Server/Database/' + "filelist.txt", 'a') as f:
                         f.write('\n')
                         f.write(self.filename + ';' + self.__login + ';')
+                        #f.write(filename + ";" + self.__login)
+
                     f.close()
                     return RSP_OK_GETF + MSG_FIELD_SEP
             else:
@@ -188,6 +208,22 @@ class ClientSession(Thread):
                 result = line.split(':')[1].strip('\n')
         f.close()
         return result
+
+    def send_file(self, filename):
+        logging.info("sending file contents")
+        f = open('Server/Database/Server_files/' + filename, 'rb')
+        l = f.read(DEFAULT_BUFSIZE)
+        #req = REQ_SENDF + MSG_FIELD_SEP
+        #self.__session_send(req)
+        while (l):
+            req = REQ_SEND + MSG_FIELD_SEP + l
+            self.__session_send(req)
+            l = f.read(1024)
+        f.close()
+        #req = REQ_SENDF + MSG_FIELD_SEP
+        #self.__session_send(req)
+        logging.info("file sending complete")
+
 
 class Server:
 

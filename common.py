@@ -9,6 +9,7 @@ REQ_AUTH = '3'
 REQ_GETLF = '4' #get list of files
 REQ_GETF = '5' #get file by name
 REQ_SP = '6' #send line number
+REQ_SHR = '7' #send shareing data
 # Responses--------------------------------------------------------------------
 RSP_OK_SEND = '0'
 RSP_OK_GET = '1'

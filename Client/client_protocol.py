@@ -4,7 +4,7 @@ from socket import AF_INET, SOCK_STREAM, socket, SHUT_RD
 from socket import error as soc_err
 from common import DEFAULT_BUFSIZE, RSP_UNKNCONTROL, REQ_SEND, RSP_OK_AUTH, RSP_ERR_AUTH, \
     MSG_SEP, MSG_FIELD_SEP, RSP_OK_SEND, RSP_OK_GET, RSP_NOTIFY, REQ_GET, REQ_AUTH, \
-    RSP_OK_GETF, REQ_GETF, REQ_SP, RSP_OK_SP, REQ_GETLF, RSP_OK_GETLF
+    RSP_OK_GETF, REQ_GETF, REQ_SP, RSP_OK_SP, REQ_GETLF, RSP_OK_GETLF, REQ_SHR
 
 FORMAT = '%(asctime)s (%(threadName)-2s) %(message)s'
 logging.basicConfig(level=logging.INFO, format=FORMAT)
@@ -20,6 +20,8 @@ class Client():
         self.__on_recv_file = None
         self.__token = None
         self._auth_failed = False
+        self.message = None
+        self.line = None
 
     def set_on_recv_file_callback(self, on_recv_file_f):
         self.__on_recv_file = on_recv_file_f
@@ -123,6 +125,7 @@ class Client():
             logging.debug('Messages retrieved ...')
             msgs = message[2:].split(MSG_FIELD_SEP)
             for m in msgs:
+
                 self.__on_recv(m)
         elif message.startswith(RSP_OK_GETLF + MSG_FIELD_SEP):
             logging.debug('Filelist received ...')
@@ -135,9 +138,13 @@ class Client():
         elif message.startswith(RSP_OK_SP + MSG_FIELD_SEP):
             logging.debug('Line available ...')
             messages = message.split(MSG_SEP)
-            m = messages[len(messages)-1][3:]
+            #m = messages[len(messages)-1][3:]
+            m = message[3:]
             print 'you can write to line: '+ str(m)
-            self.__on_recv(m)
+            #self.__on_recv(m)
+            #self.line = m
+            self.message = m
+
         else:
             logging.debug('Unknown control message received: %s ' % message)
             return RSP_UNKNCONTROL
@@ -177,6 +184,28 @@ class Client():
     def send_filename(self,message):
         logging.info("sending filename")
         req = REQ_GETF + MSG_FIELD_SEP + message
+        return self.__session_send(req)
+
+    # send the whole file
+    #def send_long_message(self, message):
+        # split message into chunks of size DEFAULT_BUFSIZE and send all the chunks to server
+     #   logging.info("sending long message")
+     #   l = [message[i:i + DEFAULT_BUFSIZE] for i in range(0, len(message), DEFAULT_BUFSIZE)]
+     #   req = REQ_SENDF + MSG_FIELD_SEP
+     #   self.__session_send(req)
+     #   for chunk in l:
+     #       req = REQ_SEND + MSG_FIELD_SEP + "".join(chunk)
+     #       self.__session_send(req)
+     #   req = REQ_SENDF + MSG_FIELD_SEP
+     #   self.__session_send(req)
+     #   logging.info("long message sending complete")
+
+    def get_file(self,message):
+        self.__on_recv_file(message)
+
+    def share_file(self,message):
+        logging.info("sending sharing data")
+        req = REQ_SHR + MSG_FIELD_SEP + message
         return self.__session_send(req)
 
 
