@@ -120,8 +120,10 @@ class Client():
             self.__on_authorized()
         elif message.startswith(RSP_NOTIFY + MSG_FIELD_SEP):
             logging.info('Server notification received, fetching messages')
+            self.message = message
             self.get_last_message()
         elif message.startswith(RSP_OK_GET + MSG_FIELD_SEP):
+            print(message)
             logging.info('Last message received')
             msg = message[2:].split(MSG_FIELD_SEP)
             self.line = msg[4]

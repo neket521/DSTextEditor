@@ -35,8 +35,7 @@ def client_main(args):
         ui.on_filelist_received(msg)
 
     def on_recv_file(msg):
-        t = threading.Thread(name='UserInterface', target=ui.init(msg))
-        t.start()
+        ui.init(msg)
 
     c.set_on_published_callback(on_publish)
     c.set_on_recv_callback(on_recv)

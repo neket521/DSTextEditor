@@ -3,8 +3,9 @@ from ScrolledText import *
 import tkFileDialog
 import tkMessageBox
 import Tkinter
+import threading
 
-class UI:
+class UI(threading.Thread):
 
     username = None
     password = None
@@ -13,9 +14,13 @@ class UI:
 
     def __init__(self, client):
         self.client = client
+        threading.Thread.__init__(self)
 
     def init(self, file_content):
         self.f_content = file_content
+        self.start()
+
+    def run(self):
         self.root = Tkinter.Tk(className=" Awesome distributed text editor")
         self.textPadWidth = 80
         self.textPad = ScrolledText(self.root, width=82, height=20)
@@ -30,6 +35,7 @@ class UI:
         self.textPad.insert('1.0', self.f_content)
         self.line_number = 1
         self.old_line_number = -1
+        self.old_message = ""
 
         def send():
             l = self.get_cursor_pos().split('.')[1]
@@ -38,6 +44,7 @@ class UI:
                 self.counter = False
             self.old_length = l
             self.root.after(5000, send)
+
         self.root.after(5000, send)
 
         def get_line():
@@ -46,6 +53,7 @@ class UI:
                 self.send_position()
                 self.old_line_number = self.line_number
             self.root.after(10, get_line)
+
         self.root.after(10, get_line)
         self.root.mainloop()
 
@@ -119,6 +127,7 @@ class UI:
         root.mainloop()
 
     def open_command(self):
+        self.send_message(0)
         self.root.destroy()
         self.getFileList()
 
@@ -131,9 +140,10 @@ class UI:
             file.close()
 
     def put_message(self,*args):
-        if self.client.message != None:
-            print(self.client.message)
+        #print(self.client.message)
+        if self.client.message != None and self.client.message != self.old_message:
             self.textPad.insert(END, self.client.message)
+            self.old_message = self.client.message
 
     def put_coursor(self,*args):
         if self.textPad.index(INSERT).split('.')[1] != self.client.line:
@@ -174,7 +184,7 @@ class UI:
         self.client.get_file_by_filename(UI.filename)
 
     def share_command(self):
-        root = Tk()
+        root = Tk(className="Share")
         filenamebox = Entry(root)
 
         def onpwdentry(evt):
