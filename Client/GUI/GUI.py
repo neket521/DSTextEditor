@@ -2,24 +2,20 @@ from Tkinter import *
 from ScrolledText import *
 import tkFileDialog
 import tkMessageBox
-import threading
 import Tkinter
 
-class UI(threading.Thread):
+class UI:
+
+    username = None
+    password = None
+    filename = None
+    sharewith = None
 
     def __init__(self, client):
         self.client = client
-        self.f_content = None
-        threading.Thread.__init__(self)
-
 
     def init(self, file_content):
         self.f_content = file_content
-        self.start()
-
-
-
-    def run(self):
         self.root = Tkinter.Tk(className=" Awesome distributed text editor")
         self.textPadWidth = 80
         self.textPad = ScrolledText(self.root, width=self.textPadWidth, height=20)
@@ -27,10 +23,6 @@ class UI(threading.Thread):
         self.linecount = 0
         self.old_length = -1
         self.counter = True
-        self.username = None
-        self.password = None
-        self.sharewith = None
-        self.filename = None
         self.init_menu()
         self.textPad.bind("<Key>", self.newline_check)
         self.textPad.bind("<KeyRelease>", self.put_message)
@@ -74,7 +66,6 @@ class UI(threading.Thread):
         text = self.textPad.get('1.0', END + '-1c').encode("utf-8").split('\n')
         return [text[i:i + self.textPadWidth] for i in range(0, len(text), self.textPadWidth)]
 
-
     def send_message(self, *args):
         tosend = "".join(self.getLines()[-1])
         self.client.send_short_message(tosend)
@@ -103,13 +94,13 @@ class UI(threading.Thread):
         pwdbox = Entry(root, show='*')
 
         def onpwdentry(evt):
-            self.username = userbox.get()
-            self.password = pwdbox.get()
+            UI.username = userbox.get()
+            UI.password = pwdbox.get()
             root.destroy()
 
         def onokclick():
-            self.username = userbox.get()
-            self.password = pwdbox.get()
+            UI.username = userbox.get()
+            UI.password = pwdbox.get()
             root.destroy()
 
         Label(root, text='Username and password').pack(side='top')
@@ -118,7 +109,7 @@ class UI(threading.Thread):
         pwdbox.bind('<Return>', onpwdentry)
         Button(root, command=onokclick, text='OK').pack(side='bottom')
         root.mainloop()
-        return self.username+','+self.password
+        return UI.username+','+UI.password
 
     def show_files(self, msg):
         root = Tk()
@@ -145,7 +136,7 @@ class UI(threading.Thread):
 
     def put_coursor(self,*args):
         if self.textPad.index(INSERT).split('.')[1] != self.client.line:
-            self.textpad.mark_set("insert", "%d.%d" % (0, self.client.line))
+            self.textPad.mark_set("insert", "%d.%d" % (0, self.client.line))
 
     def exit_command(self):
         if tkMessageBox.askokcancel("Quit", "Do you really want to quit?"):
@@ -155,18 +146,18 @@ class UI(threading.Thread):
     def about_command(self):
         label = tkMessageBox.showinfo('Copyright (c) Anton Prokopov, Nikita Kirienko, Elmar Abbasov')
 
-
     def on_filelist_received(self, filelist):
         #filelist contains coma-separated file names to which current user has access
         root = Tk()
         filenamebox = Entry(root)
+
         def onpwdentry(evt):
             if filenamebox.get() != '':
-                self.newfilename = filenamebox.get()
+                UI.filename = filenamebox.get()
                 root.destroy()
 
         def onclick(name):
-            self.newfilename = name
+            UI.filename = name
             root.destroy()
 
         Label(root, text='Choose file to edit or enter new filename').pack(side='top')
@@ -179,21 +170,19 @@ class UI(threading.Thread):
         filenamebox.pack(side='bottom')
         filenamebox.bind('<Return>', onpwdentry)
         root.mainloop()
-        #print self.newfilename
-        self.client.send_filename(self.newfilename)
+        self.client.send_filename(UI.filename)
 
     def share_command(self):
-        # filelist contains coma-separated file names to which current user has access
         root = Tk()
         filenamebox = Entry(root)
 
         def onpwdentry(evt):
             if filenamebox.get() != '':
-                self.sharewith = filenamebox.get()
+                UI.sharewith = filenamebox.get()
                 root.destroy()
 
         def onclick():
-            self.sharewith = filenamebox.get()
+            UI.sharewith = filenamebox.get()
             root.destroy()
 
         Label(root, text='Enter user name to share file with').pack(side='top')
@@ -203,5 +192,4 @@ class UI(threading.Thread):
         filenamebox.pack(side='top')
         filenamebox.bind('<Return>', onpwdentry)
         root.mainloop()
-        # print self.newfilename
-        self.client.share_file(self.newfilename + "," + self.sharewith)
+        self.client.share_file(UI.filename + ":" + UI.sharewith)

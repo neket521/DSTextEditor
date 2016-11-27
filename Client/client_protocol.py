@@ -125,7 +125,6 @@ class Client():
             logging.debug('Messages retrieved ...')
             msgs = message[2:].split(MSG_FIELD_SEP)
             for m in msgs:
-
                 self.__on_recv(m)
         elif message.startswith(RSP_OK_GETLF + MSG_FIELD_SEP):
             logging.debug('Filelist received ...')
@@ -133,16 +132,11 @@ class Client():
             self.__on_recv_filelist(m)
         elif message.startswith(RSP_OK_GETF + MSG_FIELD_SEP):
             logging.debug('File received ...')
-            m = message[3:].replace(RSP_OK_GETF + MSG_FIELD_SEP,"")
+            m = message.split(MSG_FIELD_SEP)[1]
             self.__on_recv_file(m)
         elif message.startswith(RSP_OK_SP + MSG_FIELD_SEP):
             logging.debug('Line available ...')
-            messages = message.split(MSG_SEP)
-            #m = messages[len(messages)-1][3:]
             m = message[3:]
-            print 'you can write to line: '+ str(m)
-            #self.__on_recv(m)
-            #self.line = m
             self.message = m
 
         else:
@@ -185,23 +179,6 @@ class Client():
         logging.info("sending filename")
         req = REQ_GETF + MSG_FIELD_SEP + message
         return self.__session_send(req)
-
-    # send the whole file
-    #def send_long_message(self, message):
-        # split message into chunks of size DEFAULT_BUFSIZE and send all the chunks to server
-     #   logging.info("sending long message")
-     #   l = [message[i:i + DEFAULT_BUFSIZE] for i in range(0, len(message), DEFAULT_BUFSIZE)]
-     #   req = REQ_SENDF + MSG_FIELD_SEP
-     #   self.__session_send(req)
-     #   for chunk in l:
-     #       req = REQ_SEND + MSG_FIELD_SEP + "".join(chunk)
-     #       self.__session_send(req)
-     #   req = REQ_SENDF + MSG_FIELD_SEP
-     #   self.__session_send(req)
-     #   logging.info("long message sending complete")
-
-    def get_file(self,message):
-        self.__on_recv_file(message)
 
     def share_file(self,message):
         logging.info("sending sharing data")
