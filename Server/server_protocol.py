@@ -25,12 +25,10 @@ class ClientSession(Thread):
         self.__login = ''
         self.__token = ''
         self.__last_linenr = None
-        self.__filename = '' # when filename is updated, queue has to be reinitialized,
-                             # but before previously initialized queue should write all the changes to the file
+        self.__filename = ''
 
     def __save_message(self, msg):
         self.__serv.save_message(self.__filename, self.linenr, msg, self.__addr)
-        print len(self.__get())
 
     def __get(self):
         msgs = self.__serv.get_messages()
@@ -229,7 +227,6 @@ class Server:
         clients = []
 
         def __on_save_message():
-            print 'notify should be triggered'
             for c in clients:
                 c.notify()
 
