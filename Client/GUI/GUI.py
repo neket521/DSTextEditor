@@ -26,16 +26,16 @@ class UI:
         self.init_menu()
         self.textPad.bind("<Key>", self.newline_check)
         self.textPad.bind("<KeyRelease>", self.put_message)
-        #self.textPad.bind("<Return>", self.send_position)
+        #self.textPad.bind('<Return>', self.send_message(1))
         self.textPad.pack()
         self.textPad.insert('1.0', self.f_content)
         self.line_number = 1
         self.old_line_number = -1
 
         def send():
-            l = self.getLength()
-            if (self.old_length == l and l != 0 and self.counter and self.getLines()[-1] != []):
-                self.send_message()
+            l = self.get_cursor_pos().split('.')[1]
+            if self.old_length == l and l != 0 and self.counter:
+                self.send_message(0)
                 self.counter = False
             self.old_length = l
             self.root.after(5000, send)
@@ -70,23 +70,24 @@ class UI:
     def get_cursor_pos(self):
         return self.textPad.index(INSERT)
 
-    def getLines(self):
-        text = self.textPad.get('1.0', END + '-1c').encode("utf-8").split('\n')
-        return [text[i:i + self.textPadWidth] for i in range(0, len(text), self.textPadWidth)]
-
-    def send_message(self, *args):
-        tosend = "".join(self.getLines()[-1])
-        self.client.send_short_message(tosend)
+    def send_message(self, line,*args):
+        if self.get_cursor_pos().split('.')[1] != '0':
+            tosend = self.textPad.get(str(int(self.get_cursor_pos().split('.')[0])-line) + '.0', END + '-1c')
+            print(tosend)
+            self.client.send_short_message(tosend)
 
     def send_position(self, *args):
         self.client.send_position(self.get_cursor_pos().split(".")[0])
 
-    def newline_check(self, *args):
+    def newline_check(self, event,*args):
+        if event.keysym == "Return":
+            self.send_message(1)
         self.counter = True
         #print(self.get_cursor_pos().split('.')[1] + "|" + str(self.textPadWidth))
         if self.get_cursor_pos().split('.')[1] == str(self.textPadWidth+1):
+            self.send_message(0)
             self.textPad.insert(END, '\n')
-            self.send_message()
+
 
 
     def getFileList(self):
