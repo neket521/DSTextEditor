@@ -26,7 +26,6 @@ class UI:
         self.init_menu()
         self.textPad.bind("<Key>", self.newline_check)
         self.textPad.bind("<KeyRelease>", self.put_message)
-        #self.textPad.bind('<Return>', self.send_message(1))
         self.textPad.pack()
         self.textPad.insert('1.0', self.f_content)
         self.line_number = 1
@@ -73,7 +72,7 @@ class UI:
     def send_message(self, line,*args):
         if self.get_cursor_pos().split('.')[1] != '0':
             tosend = self.textPad.get(str(int(self.get_cursor_pos().split('.')[0])-line) + '.0', END + '-1c')
-            print(tosend)
+            #print(tosend)
             self.client.send_short_message(tosend)
 
     def send_position(self, *args):
@@ -83,12 +82,9 @@ class UI:
         if event.keysym == "Return":
             self.send_message(1)
         self.counter = True
-        #print(self.get_cursor_pos().split('.')[1] + "|" + str(self.textPadWidth))
         if self.get_cursor_pos().split('.')[1] == str(self.textPadWidth+1):
             self.send_message(0)
             self.textPad.insert(END, '\n')
-
-
 
     def getFileList(self):
         self.client.get_filelist()
@@ -175,7 +171,7 @@ class UI:
         filenamebox.pack(side='bottom')
         filenamebox.bind('<Return>', onpwdentry)
         root.mainloop()
-        self.client.send_filename(UI.filename)
+        self.client.get_file_by_filename(UI.filename)
 
     def share_command(self):
         root = Tk()

@@ -44,11 +44,13 @@ class ClientSession(Thread):
                 b = self.__s.recv(DEFAULT_BUFSIZE)
                 m += b
             if len(b) <= 0:
+                self.__serv.reinit_queue()
                 self.__s.close()
                 LOG.info('Client %s:%d disconnected' % self.__addr)
                 m = ''
             m = m[:-1]
         except KeyboardInterrupt:
+            self.__serv.reinit_queue()
             self.__s.close()
             LOG.info('Ctrl+C issued, disconnecting client %s:%d' % self.__addr)
             m = ''
@@ -57,6 +59,7 @@ class ClientSession(Thread):
                 LOG.warn('Client %s:%d left before server could handle it' % self.__addr)
             else:
                 LOG.error('Error: %s' % str(e))
+                self.__serv.reinit_queue()
             self.__s.close()
             LOG.info('Client %s:%d disconnected' % self.__addr)
             m = ''
@@ -79,28 +82,28 @@ class ClientSession(Thread):
                 return RSP_OK_SEND + MSG_FIELD_SEP
             elif message.startswith(REQ_GET + MSG_FIELD_SEP):
                 msgs = self.__get()
-                msgs = map(lambda x: ' '.join(map(str, x)), msgs)
-                msgs = MSG_FIELD_SEP.join(tuple(msgs))
-                return RSP_OK_GET + MSG_FIELD_SEP + msgs
+                msg = msgs[len(msgs)-1]
+                print 'Returning:'
+                print msg
+                return RSP_OK_GET + MSG_FIELD_SEP + msg
             elif message.startswith(REQ_SP + MSG_FIELD_SEP):
-                linenr = int(message.split(MSG_FIELD_SEP)[1])
-                if self.__last_linenr != linenr:
+                self.linenr = int(message.split(MSG_FIELD_SEP)[1])
+                if self.__last_linenr != self.linenr:
                     self.__serv.unlock_line(self.__last_linenr, self.__login)
-                    self.__serv.lock_line(linenr, self.__login)
+                    self.__serv.lock_line(self.linenr, self.__login)
                 else:
-                    while not self.__serv.lock_line(linenr, self.__login):
-                        linenr += 1
-                self.__last_linenr = linenr
-                LOG.info("Line " + str(linenr))
-                return RSP_OK_SP + MSG_FIELD_SEP + str(linenr)
+                    while not self.__serv.lock_line(self.linenr, self.__login):
+                        self.linenr += 1
+                self.__last_linenr = self.linenr
+                LOG.info("Line " + str(self.linenr))
+                return RSP_OK_SP + MSG_FIELD_SEP + str(self.linenr)
             elif message.startswith(REQ_GETLF + MSG_FIELD_SEP):
                 msg = ''
                 with open('Server/Database/' + "filelist.txt", 'r') as f:
                     for line in f:
                         line_parts = line.split(';')
                         if line_parts[2].__contains__(self.__login) or line_parts[1] == self.__login:
-                            msg += line_parts[0] + ',' # this could be huge
-                f.close()
+                            msg += line_parts[0] + ',' # this could be huge, but we assume it's not
                 LOG.info('Filelist sent')
                 return RSP_OK_GETLF + MSG_FIELD_SEP + msg
             elif message.startswith(REQ_SHR + MSG_FIELD_SEP):
@@ -114,31 +117,29 @@ class ClientSession(Thread):
                         if lines[i].split(';')[0] == filename:
                             if not lines[i].split(';')[2].__contains__(shared_with):
                                 lines[i] = filename + ';' + lines[i].split(';')[1] + ';' + shared_with + '\n'
-                                print lines[i]
                     f.writelines(lines)
                 LOG.info('File '+filename+' is shared with '+shared_with)
-                return "90:" # what the hell is this?
+                return "90:" # need to create response constant and use it here
             elif message.startswith(REQ_GETF + MSG_FIELD_SEP):
-                self.filename = message.split(MSG_FIELD_SEP)[1]
-                if not self.filename.__contains__('.txt'):
-                    self.filename += '.txt'
-                if os.path.isfile('Server/UserFiles/' + self.filename):
-                    with open('Server/UserFiles/' + self.filename, 'r') as f:
+                self.__filename = message.split(MSG_FIELD_SEP)[1]
+                self.__serv.reinit_queue()
+                if not self.__filename.__contains__('.txt'):
+                    self.__filename += '.txt'
+                if os.path.isfile('Server/UserFiles/' + self.__filename):
+                    with open('Server/UserFiles/' + self.__filename, 'r') as f:
                         LOG.info('file opened')
                         LOG.info('receiving data...')
                         LOG.info('receiving data...')
                         for line in f.readlines():
                             self.__s.send(RSP_OK_GETF + MSG_FIELD_SEP + line)
                     LOG.info('Successfully read the file and sent its contents back to client')
-                    f.close()
                     return RSP_OK_GETF + MSG_FIELD_SEP
                 else:
-                    nf = open('Server/UserFiles/' + self.filename, 'w')
+                    nf = open('Server/UserFiles/' + self.__filename, 'w')
                     nf.close()
                     with open('Server/Database/' + "filelist.txt", 'a') as f:
                         f.write('\n')
-                        f.write(self.filename + ';' + self.__login + ';')
-                    f.close()
+                        f.write(self.__filename + ';' + self.__login + ';')
                     return RSP_OK_GETF + MSG_FIELD_SEP
             else:
                 LOG.debug('Unknown control message received: %s ' % message)
@@ -167,6 +168,7 @@ class ClientSession(Thread):
                 self.__s.sendall(m)
                 r = True
             except KeyboardInterrupt:
+                self.__serv.reinit_queue()
                 self.__s.close()
                 LOG.info('Ctrl+C issued, disconnecting client %s:%d' \
                          '' % self.__addr)
@@ -176,6 +178,7 @@ class ClientSession(Thread):
                              '' % self.__addr)
                 else:
                     LOG.error('Error: %s' % str(e))
+                self.__serv.reinit_queue()
                 self.__s.close()
                 LOG.info('Client %s:%d disconnected' % self.__addr)
             return r
@@ -191,7 +194,6 @@ class ClientSession(Thread):
             rsp = self.__protocol_rcv(m)
             if not self.__session_send(rsp):
                 break
-
 
     def get_passwd_hash_by_username(self, username):
         dir = os.path.dirname(__file__)
@@ -226,6 +228,7 @@ class Server:
         clients = []
 
         def __on_save_message():
+            print 'notify should be triggered'
             for c in clients:
                 c.notify()
 
@@ -237,6 +240,7 @@ class Server:
                 LOG.info('Awaiting new clients ...')
                 client_socket, client_addr = self.__s.accept()
                 c = ClientSession(client_socket, client_addr, self)
+                self.reinit_queue() #save changes to file, when new client joins, so new client can have these changes, when he copies the file
                 clients.append(c)
                 c.start()
         except KeyboardInterrupt:
@@ -244,6 +248,7 @@ class Server:
         finally:
             if client_socket != None:
                 client_socket.close()
+            self.reinit_queue()
             self.__s.close()
         map(lambda x: x.join(), clients)
 
@@ -263,6 +268,9 @@ class Server:
             self.__msgs.get_messages()
         return msgs
 
+    def reinit_queue(self):
+        self.__msgs.reinit()
+
     def lock_line(self, linenr, user):
         for el in self.__locked_lines:
             if el[0] == linenr and el[1] != user:
@@ -270,11 +278,9 @@ class Server:
             elif el[0] == linenr and el[1] == user:
                 return True
         self.__locked_lines.append((linenr, user))
-        print self.__locked_lines
         return True
 
     def unlock_line(self, linenr, user):
         for el in self.__locked_lines:
             if el[0] == linenr and el[1] == user:
                 self.__locked_lines.remove((linenr, user))
-        print self.__locked_lines

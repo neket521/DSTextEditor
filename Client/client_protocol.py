@@ -119,16 +119,17 @@ class Client():
             self.__token = token
             self.__on_authorized()
         elif message.startswith(RSP_NOTIFY + MSG_FIELD_SEP):
-            logging.debug('Server notification received, fetching messages')
-            # self.__fetch_document()
+            logging.info('Server notification received, fetching messages')
+            self.get_last_message()
         elif message.startswith(RSP_OK_GET + MSG_FIELD_SEP):
-            logging.debug('Messages retrieved ...')
-            msgs = message[2:].split(MSG_FIELD_SEP)
-            for m in msgs:
-                self.__on_recv(m)
+            logging.info('Last message received')
+            msg = message[2:].split(MSG_FIELD_SEP)
+            self.line = msg[4]
+            self.message = msg[5]
+            self.__on_recv(msg)
         elif message.startswith(RSP_OK_GETLF + MSG_FIELD_SEP):
             logging.debug('Filelist received ...')
-            m = message[3:] #RSP_OK_GETF has already 2 symbols + 1 for separator ':' = offset of 3
+            m = message[3:]
             self.__on_recv_filelist(m)
         elif message.startswith(RSP_OK_GETF + MSG_FIELD_SEP):
             logging.debug('File received ...')
@@ -137,8 +138,7 @@ class Client():
         elif message.startswith(RSP_OK_SP + MSG_FIELD_SEP):
             logging.debug('Line available ...')
             m = message[3:]
-            self.message = m
-
+            self.line = m
         else:
             logging.debug('Unknown control message received: %s ' % message)
             return RSP_UNKNCONTROL
@@ -159,6 +159,10 @@ class Client():
         req = REQ_AUTH + MSG_FIELD_SEP + username + MSG_FIELD_SEP + hash_obj.hexdigest()
         return self.__session_send(req)
 
+    def get_last_message(self):
+        req = REQ_GET + MSG_FIELD_SEP
+        return self.__session_send(req)
+
     # send updated line
     def send_short_message(self, message):
         logging.info("sending short message")
@@ -175,8 +179,8 @@ class Client():
         req = REQ_GETLF + MSG_FIELD_SEP + 'getFiles'
         return self.__session_send(req)
 
-    def send_filename(self,message):
-        logging.info("sending filename")
+    def get_file_by_filename(self, message):
+        logging.info("fetching the document from server by name")
         req = REQ_GETF + MSG_FIELD_SEP + message
         return self.__session_send(req)
 

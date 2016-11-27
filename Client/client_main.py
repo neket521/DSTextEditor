@@ -23,11 +23,7 @@ def client_main(args):
 
     def on_recv(msg):
         if len(msg) > 0:
-            if isinstance(msg, int):
-                print msg
-                ui.root.after(10, ui.set_cursor_pos(int(msg)))
-            else:
-                logging.info('\n%s' % msg)
+            logging.info('Received message\n%s' % msg)
 
     def on_publish():
         logging.info('\n Message published')
@@ -39,9 +35,8 @@ def client_main(args):
         ui.on_filelist_received(msg)
 
     def on_recv_file(msg):
-        t = threading.Thread(name='InputProcessor', target=ui.init(msg))
+        t = threading.Thread(name='UserInterface', target=ui.init(msg))
         t.start()
-
 
     c.set_on_published_callback(on_publish)
     c.set_on_recv_callback(on_recv)
