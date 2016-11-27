@@ -18,7 +18,7 @@ class UI:
         self.f_content = file_content
         self.root = Tkinter.Tk(className=" Awesome distributed text editor")
         self.textPadWidth = 80
-        self.textPad = ScrolledText(self.root, width=self.textPadWidth, height=20)
+        self.textPad = ScrolledText(self.root, width=82, height=20)
         self.length = 0
         self.linecount = 0
         self.old_length = -1
@@ -26,20 +26,28 @@ class UI:
         self.init_menu()
         self.textPad.bind("<Key>", self.newline_check)
         self.textPad.bind("<KeyRelease>", self.put_message)
-        self.textPad.bind("<Return>", self.send_position)
+        #self.textPad.bind("<Return>", self.send_position)
         self.textPad.pack()
         self.textPad.insert('1.0', self.f_content)
-        self.send_position()
+        self.line_number = 1
+        self.old_line_number = -1
 
-        def update():
+        def send():
             l = self.getLength()
             if (self.old_length == l and l != 0 and self.counter and self.getLines()[-1] != []):
                 self.send_message()
                 self.counter = False
             self.old_length = l
-            self.root.after(5000, update)
+            self.root.after(5000, send)
+        self.root.after(5000, send)
 
-        self.root.after(5000, update)
+        def get_line():
+            self.line_number = self.get_cursor_pos().split('.')[0]
+            if self.line_number != self.old_line_number:
+                self.send_position()
+                self.old_line_number = self.line_number
+            self.root.after(10, get_line)
+        self.root.after(10, get_line)
         self.root.mainloop()
 
     def init_menu(self):
@@ -75,15 +83,11 @@ class UI:
 
     def newline_check(self, *args):
         self.counter = True
-        length = self.getLength()
-        if length % self.textPadWidth == 0 and length != 0:
+        #print(self.get_cursor_pos().split('.')[1] + "|" + str(self.textPadWidth))
+        if self.get_cursor_pos().split('.')[1] == str(self.textPadWidth+1):
             self.textPad.insert(END, '\n')
-            #self.linecount += 1
-            self.send_position()
             self.send_message()
-        #elif int(length / self.textPadWidth) != self.linecount:
-        #    self.linecount = int(length / self.textPadWidth)
-        #    self.update()
+
 
     def getFileList(self):
         self.client.get_filelist()
@@ -185,7 +189,7 @@ class UI:
             UI.sharewith = filenamebox.get()
             root.destroy()
 
-        Label(root, text='Enter user name to share file with').pack(side='top')
+        Label(root, text="Enter user name to share file with. \n To share with multiple users, list those users coma-separated (no spaces)").pack(side='top')
         button = Button(master=root, command=onclick, text="OK")
         button.pack(side='bottom')
 
