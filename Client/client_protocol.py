@@ -120,15 +120,15 @@ class Client():
             self.__on_authorized()
         elif message.startswith(RSP_NOTIFY + MSG_FIELD_SEP):
             logging.info('Server notification received, fetching messages')
-            self.message = message
+            #self.message = message
             self.get_last_message()
         elif message.startswith(RSP_OK_GET + MSG_FIELD_SEP):
             print(message)
             logging.info('Last message received')
-            msg = message[2:].split(MSG_FIELD_SEP)
-            self.line = msg[4]
-            self.message = msg[5]
-            self.__on_recv(msg)
+            msg = message.split(MSG_FIELD_SEP)
+            self.line = msg[1]
+            self.message = msg[2]
+            #self.__on_recv(msg)
         elif message.startswith(RSP_OK_GETLF + MSG_FIELD_SEP):
             logging.debug('Filelist received ...')
             m = message[3:]

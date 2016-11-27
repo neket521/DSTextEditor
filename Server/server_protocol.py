@@ -30,6 +30,7 @@ class ClientSession(Thread):
 
     def __save_message(self, msg):
         self.__serv.save_message(self.__filename, self.linenr, msg, self.__addr)
+        print len(self.__get())
 
     def __get(self):
         msgs = self.__serv.get_messages()
@@ -85,7 +86,7 @@ class ClientSession(Thread):
                 msg = msgs[len(msgs)-1]
                 print 'Returning:'
                 print msg
-                return RSP_OK_GET + MSG_FIELD_SEP + msg
+                return RSP_OK_GET + MSG_FIELD_SEP + str(msg[4]) + MSG_FIELD_SEP + msg[5]
             elif message.startswith(REQ_SP + MSG_FIELD_SEP):
                 self.linenr = int(message.split(MSG_FIELD_SEP)[1])
                 if self.__last_linenr != self.linenr:
@@ -265,7 +266,7 @@ class Server:
     def get_messages(self):
         msgs = []
         with self.__lock:
-            self.__msgs.get_messages()
+            msgs = self.__msgs.get_messages()
         return msgs
 
     def reinit_queue(self):
