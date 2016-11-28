@@ -25,17 +25,17 @@ class UI(threading.Thread):
         self.textPadWidth = 80
         self.textPad = ScrolledText(self.root, width=82, height=20)
         self.length = 0
-        self.linecount = 0
         self.old_length = -1
         self.counter = True
         self.init_menu()
         self.textPad.bind("<Key>", self.newline_check)
-        self.textPad.bind("<KeyRelease>", self.put_message)
+        #self.textPad.bind("<KeyRelease>", self.put_message)
         self.textPad.pack()
         self.textPad.insert('1.0', self.f_content)
         self.line_number = 1
         self.old_line_number = -1
         self.old_message = ""
+        self.sent_message = ""
 
         def send():
             l = self.get_cursor_pos().split('.')[1]
@@ -52,9 +52,15 @@ class UI(threading.Thread):
             if self.line_number != self.old_line_number:
                 self.send_position()
                 self.old_line_number = self.line_number
-            self.root.after(10, get_line)
+            self.root.after(20, get_line)
 
-        self.root.after(10, get_line)
+        self.root.after(20, get_line)
+
+
+        def get_msges():
+            self.put_message()
+            self.root.after(10, get_msges)
+        self.root.after(10, get_msges)
         self.root.mainloop()
 
     def init_menu(self):
@@ -79,16 +85,16 @@ class UI(threading.Thread):
 
     def send_message(self, line,*args):
         if self.get_cursor_pos().split('.')[1] != '0':
-            tosend = self.textPad.get(str(int(self.get_cursor_pos().split('.')[0])-line+1) + '.0', END + '-1c')
-            #print(tosend)
-            self.client.send_short_message(tosend+'\n')
+            tosend = self.textPad.get(str(int(self.get_cursor_pos().split('.')[0])-line) + '.0', END + '-1c')
+            self.sent_message = tosend
+            self.client.send_short_message(tosend)
 
     def send_position(self, *args):
         self.client.send_position(self.get_cursor_pos().split(".")[0])
 
     def newline_check(self, event,*args):
         if event.keysym == "Return":
-            self.send_message(1)
+            self.send_message(0)
         self.counter = True
         if self.get_cursor_pos().split('.')[1] == str(self.textPadWidth+1):
             self.send_message(0)
@@ -141,8 +147,11 @@ class UI(threading.Thread):
 
     def put_message(self,*args):
         if self.client.message != None and self.client.message != self.old_message:
-            self.textPad.insert(END, self.client.message)
+            while int(self.client.message.split(",")[0]) > int(self.textPad.index('end-1c').split('.')[0]):
+                self.textPad.insert(END,'\n')
+            self.textPad.insert(self.client.message.split(",")[0] + ".0", self.client.message.split(",")[1])
             self.old_message = self.client.message
+
 
     def put_coursor(self,*args):
         if self.textPad.index(INSERT).split('.')[1] != self.client.line:
