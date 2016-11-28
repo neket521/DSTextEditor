@@ -1,7 +1,6 @@
 from Client.client_protocol import Client
 from GUI.GUI import UI
 import logging
-import threading
 
 FORMAT = '%(asctime)s %(message)s'
 logging.basicConfig(level=logging.INFO, format=FORMAT)

@@ -85,9 +85,9 @@ class UI(threading.Thread):
 
     def send_message(self, line,*args):
         if self.get_cursor_pos().split('.')[1] != '0':
-            tosend = self.textPad.get(str(int(self.get_cursor_pos().split('.')[0])-line) + '.0', END + '-1c')
+            tosend = self.textPad.get(str(int(self.get_cursor_pos().split('.')[0])-line+1) + '.0', END + '-1c')
             self.sent_message = tosend
-            self.client.send_short_message(tosend)
+            self.client.send_short_message(tosend+'\n')
 
     def send_position(self, *args):
         self.client.send_position(self.get_cursor_pos().split(".")[0])
