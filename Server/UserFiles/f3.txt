@@ -1,15 +1,2 @@
-1\./anton
-11\./nikita
-11\./nikita
-35
-4
-5
-\./anton
-4\./anton
-5\./anton
-ddd
-7\./anton
-8\./anton
-9\./anton
-0\./anton
-2354\./anton
+okay, lets try this out
+

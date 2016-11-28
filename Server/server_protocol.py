@@ -82,9 +82,7 @@ class ClientSession(Thread):
             elif message.startswith(REQ_GET + MSG_FIELD_SEP):
                 msgs = self.__get()
                 msg = msgs[len(msgs)-1]
-                print 'Returning:'
-                print msg
-                return RSP_OK_GET + MSG_FIELD_SEP + str(msg[4]) + MSG_FIELD_SEP + msg[5] + MSG_FIELD_SEP
+                return RSP_OK_GET + MSG_FIELD_SEP + str(msg[4]) + MSG_FIELD_SEP + msg[5] + MSG_FIELD_SEP + self.__login + MSG_FIELD_SEP
             elif message.startswith(REQ_SP + MSG_FIELD_SEP):
                 self.linenr = int(message.split(MSG_FIELD_SEP)[1])
                 if self.__last_linenr != self.linenr:
@@ -125,14 +123,17 @@ class ClientSession(Thread):
                 if not self.__filename.__contains__('.txt'):
                     self.__filename += '.txt'
                 if os.path.isfile('Server/UserFiles/' + self.__filename):
+                    data = ''
                     with open('Server/UserFiles/' + self.__filename, 'r') as f:
                         LOG.info('file opened')
                         LOG.info('receiving data...')
-                        LOG.info('receiving data...')
                         for line in f.readlines():
-                            self.__s.send(RSP_OK_GETF + MSG_FIELD_SEP + line)
+                            data += line
                     LOG.info('Successfully read the file and sent its contents back to client')
-                    return RSP_OK_GETF + MSG_FIELD_SEP
+                    if data != '':
+                        return RSP_OK_GETF + MSG_FIELD_SEP + data + MSG_FIELD_SEP
+                    else:
+                        return RSP_OK_GETF + MSG_FIELD_SEP
                 else:
                     nf = open('Server/UserFiles/' + self.__filename, 'w')
                     nf.close()
