@@ -84,7 +84,7 @@ class ClientSession(Thread):
                 msg = msgs[len(msgs)-1]
                 print 'Returning:'
                 print msg
-                return RSP_OK_GET + MSG_FIELD_SEP + str(msg[4]) + MSG_FIELD_SEP + msg[5]
+                return RSP_OK_GET + MSG_FIELD_SEP + str(msg[4]) + MSG_FIELD_SEP + msg[5] + MSG_FIELD_SEP
             elif message.startswith(REQ_SP + MSG_FIELD_SEP):
                 self.linenr = int(message.split(MSG_FIELD_SEP)[1])
                 if self.__last_linenr != self.linenr:

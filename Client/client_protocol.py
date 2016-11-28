@@ -125,7 +125,7 @@ class Client():
             logging.info('Last message received')
             msg = message.split(MSG_FIELD_SEP)
             self.line = msg[1]
-            self.message = msg[1] + "," + msg[2]
+            self.message = msg[1] + "," + msg[2] + "," + msg[3]
             self.__on_recv(msg)
         elif message.startswith(RSP_OK_GETLF + MSG_FIELD_SEP):
             logging.debug('Filelist received ...')
