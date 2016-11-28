@@ -37,11 +37,10 @@ class UI(threading.Thread):
         self.old_message = ""
         self.sent_message = ""
 
-
         def send():
             l = self.get_cursor_pos().split('.')[1]
             if self.old_length == l and l != 0 and self.counter:
-                self.send_message(0)
+                self.send_message(False)
                 self.counter = False
             self.old_length = l
             self.root.after(5000, send)
@@ -85,21 +84,25 @@ class UI(threading.Thread):
     def get_cursor_pos(self):
         return self.textPad.index(INSERT)
 
-    def send_message(self, line,*args):
-        if self.get_cursor_pos().split('.')[1] != '0':
-            tosend = self.textPad.get(str(int(self.get_cursor_pos().split('.')[0])-line) + '.0', END + '-1c')
-            self.client.send_short_message(tosend+'\n')
+    def send_message(self, line_removed ,*args):
+        if self.get_cursor_pos().split('.')[1] != '0' or line_removed:
+            tosend = self.textPad.get(str(int(self.get_cursor_pos().split('.')[0])) + '.0', END + '-1c')
+            self.client.send_short_message(tosend+'\n'+':'+self.usr)
 
     def send_position(self, *args):
         self.client.send_position(self.get_cursor_pos().split(".")[0])
 
     def newline_check(self, event,*args):
+        if event.keysym == "Up" or event.keysym == "Right" or event.keysym == "Left" or event.keysym == "Down":
+            return "break"
         if event.keysym == "Return":
-            self.send_message(0)
+            self.send_message(False)
         self.counter = True
         if self.get_cursor_pos().split('.')[1] == str(self.textPadWidth+1):
-            self.send_message(0)
+            self.send_message(False)
             self.textPad.insert(END, '\n')
+        if self.get_cursor_pos().split('.')[1] == str(0):
+            self.send_message(True)
 
     def getFileList(self):
         self.client.get_filelist()
@@ -135,7 +138,7 @@ class UI(threading.Thread):
         root.mainloop()
 
     def open_command(self):
-        self.send_message(0)
+        self.send_message(False)
         self.root.destroy()
         self.getFileList()
 

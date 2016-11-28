@@ -5,7 +5,6 @@ class Queue: # also history
         self.__msgs = []
 
     def reinit(self):
-        print 'reinit called'
         if len(self.__msgs) > 0:
             self.write_to_file()
             self.__counter = 0

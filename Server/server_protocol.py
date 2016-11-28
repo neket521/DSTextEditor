@@ -15,6 +15,8 @@ LOG = logging.getLogger()
 
 class ClientSession(Thread):
 
+    current_user = ''
+
     def __init__(self, soc, soc_addr, server):
         Thread.__init__(self)
         self.__s = soc
@@ -74,6 +76,7 @@ class ClientSession(Thread):
         if len(chunks) >= 3 and chunks[len(chunks)-1].strip(';') == self.__token:
             if message.startswith(REQ_SEND + MSG_FIELD_SEP):
                 msg = message.split(MSG_FIELD_SEP)[1]
+                ClientSession.current_user = message.split(MSG_FIELD_SEP)[2]
                 LOG.debug('Client %s:%d will publish: ' \
                           '%s' % (self.__addr + ((msg[:60] + '...' if len(msg) > 60 else msg),)))
                 self.__save_message(msg)
@@ -82,7 +85,10 @@ class ClientSession(Thread):
             elif message.startswith(REQ_GET + MSG_FIELD_SEP):
                 msgs = self.__get()
                 msg = msgs[len(msgs)-1]
-                return RSP_OK_GET + MSG_FIELD_SEP + str(msg[4]) + MSG_FIELD_SEP + msg[5] + MSG_FIELD_SEP + self.__login + MSG_FIELD_SEP
+                if ClientSession.current_user == '':
+                    ClientSession.current_user = self.__login
+                return RSP_OK_GET + MSG_FIELD_SEP + str(msg[4]) + MSG_FIELD_SEP + msg[5] + MSG_FIELD_SEP +\
+                       ClientSession.current_user + MSG_FIELD_SEP
             elif message.startswith(REQ_SP + MSG_FIELD_SEP):
                 self.linenr = int(message.split(MSG_FIELD_SEP)[1])
                 if self.__last_linenr != self.linenr:
